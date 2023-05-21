@@ -1,0 +1,27 @@
+{
+  "name": "mantle-renderer-v2",
+  "version": "0.1.0",
+  "description": "",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "npm --prefix test run dev",
+    "watch": "npx tsc -w",
+    "rimraf": "./node_modules/rimraf/bin.js",
+    "clean": "npx rimraf dist/",
+    "build": "npm run clean && npx tsc",
+    "i": "npm install && npm --prefix test install"
+  },
+  "keywords": [],
+  "author": "eyezah",
+  "license": "ARR",
+  "devDependencies": {
+    "@types/three": "^0.152.0",
+    "rimraf": "^5.0.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "three": "^0.152.2"
+  }
+}
