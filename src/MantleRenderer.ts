@@ -1,44 +1,48 @@
-import { AmbientLight, BoxGeometry, Mesh, MeshPhongMaterial, PerspectiveCamera, PointLight, Scene, WebGLRenderer } from "three";
+import { AmbientLight, PerspectiveCamera, PointLight, Scene, WebGLRenderer } from "three";
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import RendererOptions from "./interface/RendererOptions.js";
+import PlayerModel from "./model/PlayerModel.js";
 
 export default class MantleRenderer {
-    private renderer: WebGLRenderer;
-    private scene = new Scene();
-    private camera: PerspectiveCamera;
-    private ambientLight: AmbientLight;
-
-    private box: Mesh;
+    private readonly renderer: WebGLRenderer;
+    private readonly scene = new Scene();
+    private readonly camera: PerspectiveCamera;
+    private readonly ambientLight: AmbientLight;
+    private readonly player: PlayerModel;
+    private readonly controls: OrbitControls;
 
     public constructor(options: RendererOptions) {
         this.scene = new Scene();
+
+        // renderer
         this.renderer = new WebGLRenderer({
             canvas: options.canvas,
-            antialias: !!options.antialias
+            antialias: options.antialias
         });
-
         this.renderer.setAnimationLoop(time => this.render(time));
         
-        this.camera = new PerspectiveCamera(options.fov ?? 70, 1, 0.1, 100);
-        this.camera.position.set(0, 0, -20);
+        // camera
+        this.camera = new PerspectiveCamera(options.fov ?? 70, 1, 0.1, 1000);
+        this.camera.position.set(0, 0, -40);
+        this.scene.add(this.camera);
 
+        this.controls = new OrbitControls(this.camera, options.canvas);
+
+        // ambient light
         this.ambientLight = new AmbientLight(options.ambientLight?.color ?? 0xffffff, options.ambientLight?.intensity ?? 0);
         this.scene.add(this.ambientLight);
 
+        // player modedl
+        this.player = new PlayerModel(options.skinUrl ?? "https://api.cosmetica.cc/get/skin?user=mhf_steve");
+        this.scene.add(this.player.getMesh());
+        this.player.getMesh().rotation.y = 0.5;
 
+        this.camera.lookAt(this.player.getMesh().position);
 
-        const light = new PointLight(0xffffff, 1);
-        this.scene.add(light);
+        // point light (temporary)
+        const light = new PointLight(0xffffff, 1, 1000);
+        this.camera.add(light);
         light.position.set(0, 20, -10);
-
-        const boxGeometry = new BoxGeometry(1, 1, 1);
-        const boxTexture = new MeshPhongMaterial({
-            color: 0xff00f0
-        });
-        this.box = new Mesh(boxGeometry, boxTexture);
-
-        this.scene.add(this.box);
-
-        this.camera.lookAt(this.box.position);
     }
 
     public setSize(width: number, height: number) {
@@ -48,9 +52,15 @@ export default class MantleRenderer {
     }
 
     public render(time: number) {
-        this.box.rotation.x = time / 1000;
-        this.box.rotation.z = time / 5000;
+        this.player.getBodyPart("body")!.group.rotation.y = time / 2_000;
+
+        this.player.getBodyPart("armLeft")!.group.rotation.x = Math.sin(time / 150);
+        this.player.getBodyPart("armRight")!.group.rotation.x = -Math.sin(time / 150);
         
+        this.player.getBodyPart("legLeft")!.group.rotation.x = Math.sin(time / 150);
+        this.player.getBodyPart("legRight")!.group.rotation.x = -Math.sin(time / 150);
+        
+        this.controls.update();
         this.renderer.render(this.scene, this.camera);
     }
 }
