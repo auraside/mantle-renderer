@@ -21,6 +21,8 @@ export default class MantleRenderer {
     public readonly player: PlayerModel;
     private readonly controls: OrbitControls;
     private eventListeners: Map<EventType, (() => void)[]> = new Map();
+    private lastRenderTime = 0;
+    private renderTime = 0;
 
     public constructor(options: RendererOptions) {
         this.scene = new Scene();
@@ -108,7 +110,7 @@ export default class MantleRenderer {
         this.scene.add(this.ambientLight);
 
         // player model
-        this.player = new PlayerModel({
+        this.player = new PlayerModel(this, {
             skin: options.skin || "mhf_steve",
             slim: !!options.slim
         });
@@ -158,15 +160,18 @@ export default class MantleRenderer {
         }
     }
 
-    public render(time: number) {
-        this.callEvent("prerender");
-        // this.player.getBodyPart("body")!.pivot.rotation.y = time / 2_000;
+    public getRenderTime() {
+        return this.renderTime;
+    }
 
-        this.player.getBodyPart("armLeft")!.pivot.rotation.x = Math.sin(time / 150);
-        this.player.getBodyPart("armRight")!.pivot.rotation.x = -Math.sin(time / 150);
-        
-        this.player.getBodyPart("legLeft")!.pivot.rotation.x = Math.sin(time / 150);
-        this.player.getBodyPart("legRight")!.pivot.rotation.x = -Math.sin(time / 150);
+    public getLastFrameDuration() {
+        return this.renderTime - this.lastRenderTime;
+    }
+
+    public render(time: number) {
+        this.lastRenderTime = this.renderTime;
+        this.renderTime = time;
+        this.callEvent("prerender");
         
         this.controls.update();
 

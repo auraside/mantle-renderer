@@ -3,15 +3,16 @@ import ModelPart from "./ModelPart.js";
 import { getBoxUVs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
 import PlayerModelOptions from "../interface/PlayerModelOptions.js";
 import { stringToSkinUrl } from "../Utils.js";
+import MantleRenderer from "../MantleRenderer.js";
 
 export default class PlayerModel {
-    private group = new Group();
-    private modelParts: Map<string, ModelPart> = new Map();
+    private readonly group = new Group();
+    private readonly modelParts: Map<string, ModelPart> = new Map();
     private skinTexture: Texture | undefined;
-    private skinMaterial: Material;
-    private transparentSkinMaterial: Material;
+    private readonly skinMaterial: Material;
+    private readonly transparentSkinMaterial: Material;
 
-    public constructor(options: PlayerModelOptions) {
+    public constructor(private readonly renderer: MantleRenderer, options: PlayerModelOptions) {
         this.skinMaterial = new MeshStandardMaterial({
             side: FrontSide
         });
@@ -153,6 +154,20 @@ export default class PlayerModel {
 
         this.setSlim(!!options.slim);
         this.group.add(body.pivot);
+
+
+
+
+        this.renderer.addEventListener("prerender", () => {
+            const time = this.renderer.getRenderTime();
+            this.getBodyPart("body")!.pivot.rotation.y = time / 2_000;
+
+            this.getBodyPart("armLeft")!.pivot.rotation.x = Math.sin(time / 150);
+            this.getBodyPart("armRight")!.pivot.rotation.x = -Math.sin(time / 150);
+            
+            this.getBodyPart("legLeft")!.pivot.rotation.x = Math.sin(time / 150);
+            this.getBodyPart("legRight")!.pivot.rotation.x = -Math.sin(time / 150);
+        });
     }
 
     public getMesh() {
