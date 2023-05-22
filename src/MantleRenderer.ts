@@ -8,7 +8,7 @@ export default class MantleRenderer {
     private readonly scene = new Scene();
     private readonly camera: PerspectiveCamera;
     private readonly ambientLight: AmbientLight;
-    private readonly player: PlayerModel;
+    public readonly player: PlayerModel;
     private readonly controls: OrbitControls;
 
     public constructor(options: RendererOptions) {
@@ -32,8 +32,11 @@ export default class MantleRenderer {
         this.ambientLight = new AmbientLight(options.ambientLight?.color ?? 0xffffff, options.ambientLight?.intensity ?? 0);
         this.scene.add(this.ambientLight);
 
-        // player modedl
-        this.player = new PlayerModel(options.skinUrl ?? "https://api.cosmetica.cc/get/skin?user=mhf_steve");
+        // player model
+        this.player = new PlayerModel({
+            skin: options.skin || "mhf_steve",
+            slim: !!options.slim
+        });
         this.scene.add(this.player.getMesh());
         this.player.getMesh().rotation.y = 0.5;
 
@@ -52,13 +55,13 @@ export default class MantleRenderer {
     }
 
     public render(time: number) {
-        this.player.getBodyPart("body")!.group.rotation.y = time / 2_000;
+        // this.player.getBodyPart("body")!.pivot.rotation.y = time / 2_000;
 
-        this.player.getBodyPart("armLeft")!.group.rotation.x = Math.sin(time / 150);
-        this.player.getBodyPart("armRight")!.group.rotation.x = -Math.sin(time / 150);
+        this.player.getBodyPart("armLeft")!.pivot.rotation.x = Math.sin(time / 150);
+        this.player.getBodyPart("armRight")!.pivot.rotation.x = -Math.sin(time / 150);
         
-        this.player.getBodyPart("legLeft")!.group.rotation.x = Math.sin(time / 150);
-        this.player.getBodyPart("legRight")!.group.rotation.x = -Math.sin(time / 150);
+        this.player.getBodyPart("legLeft")!.pivot.rotation.x = Math.sin(time / 150);
+        this.player.getBodyPart("legRight")!.pivot.rotation.x = -Math.sin(time / 150);
         
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
