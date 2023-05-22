@@ -10,6 +10,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import RendererOptions from "./interface/RendererOptions.js";
 import PlayerModel from "./model/PlayerModel.js";
 
+export type EventType = "resize" | "prerender" | "postrender";
+
 export default class MantleRenderer {
     private readonly renderer: WebGLRenderer;
     private readonly composer: EffectComposer | null = null;
@@ -18,7 +20,9 @@ export default class MantleRenderer {
     private readonly ambientLight: AmbientLight;
     public readonly player: PlayerModel;
     private readonly controls: OrbitControls;
-    private eventListeners: Map<string, (() => void)[]> = new Map();
+    private eventListeners: Map<EventType, (() => void)[]> = new Map();
+    private lastRenderTime = 0;
+    private renderTime = 0;
 
     public constructor(options: RendererOptions) {
         this.scene = new Scene();
@@ -106,7 +110,7 @@ export default class MantleRenderer {
         this.scene.add(this.ambientLight);
 
         // player model
-        this.player = new PlayerModel({
+        this.player = new PlayerModel(this, {
             skin: options.skin || "mhf_steve",
             slim: !!options.slim
         });
@@ -128,7 +132,7 @@ export default class MantleRenderer {
         this.callEvent("resize");
     }
 
-    public addEventListener(event: "resize", callback: () => void) {
+    public addEventListener(event: EventType, callback: () => void) {
         const callbacks = this.eventListeners.get(event);
         if (callbacks) {
             if (!callbacks.includes(callback)) {
@@ -139,7 +143,7 @@ export default class MantleRenderer {
         }
     }
 
-    public removeEventListener(event: "resize", callback: () => void) {
+    public removeEventListener(event: EventType, callback: () => void) {
         const callbacks = this.eventListeners.get(event);
         if (!callbacks) return;
         const index = callbacks.indexOf(callback);
@@ -148,7 +152,7 @@ export default class MantleRenderer {
         }
     }
 
-    private callEvent(event: "resize") {
+    private callEvent(event: EventType) {
         const callbacks = this.eventListeners.get(event);
         if (!callbacks) return;
         for (let callback of callbacks) {
@@ -156,14 +160,18 @@ export default class MantleRenderer {
         }
     }
 
-    public render(time: number) {
-        // this.player.getBodyPart("body")!.pivot.rotation.y = time / 2_000;
+    public getRenderTime() {
+        return this.renderTime;
+    }
 
-        this.player.getBodyPart("armLeft")!.pivot.rotation.x = Math.sin(time / 150);
-        this.player.getBodyPart("armRight")!.pivot.rotation.x = -Math.sin(time / 150);
-        
-        this.player.getBodyPart("legLeft")!.pivot.rotation.x = Math.sin(time / 150);
-        this.player.getBodyPart("legRight")!.pivot.rotation.x = -Math.sin(time / 150);
+    public getLastFrameDuration() {
+        return this.renderTime - this.lastRenderTime;
+    }
+
+    public render(time: number) {
+        this.lastRenderTime = this.renderTime;
+        this.renderTime = time;
+        this.callEvent("prerender");
         
         this.controls.update();
 
@@ -173,5 +181,6 @@ export default class MantleRenderer {
             this.renderer.render(this.scene, this.camera);
         }
         
+        this.callEvent("postrender");
     }
 }

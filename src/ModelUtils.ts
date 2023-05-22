@@ -1,4 +1,4 @@
-import { BufferAttribute, BufferGeometry, Vector2 } from "three";
+import { BufferAttribute, BufferGeometry, Material, Texture, Vector2 } from "three";
 
 export function getFaceVertices(x1: number, y1: number, x2: number, y2: number, textureWidth: number, textureHeight: number) {
     return [
@@ -44,4 +44,16 @@ export function setUvs(geometry: BufferGeometry, uvs: Vector2[]) {
     const anyAttr = uvAttr as any;
     anyAttr.array = array;
     uvAttr.needsUpdate = true;
+}
+
+export function updateMaterialTexture(material: Material, texture: Texture, disposeOldTexture: boolean) {
+    const anyMaterial = material as any;
+
+    if (disposeOldTexture) {
+        const oldTexture = anyMaterial.map as Texture;
+        oldTexture.dispose();
+    }
+    
+    anyMaterial.map = texture;
+    material.needsUpdate = true;
 }
