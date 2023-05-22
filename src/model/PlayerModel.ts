@@ -1,4 +1,4 @@
-import { BoxGeometry, DoubleSide, FrontSide, Group, MeshStandardMaterial, NearestFilter, SRGBColorSpace, TextureLoader, sRGBEncoding } from "three";
+import { BoxGeometry, DisplayP3ColorSpace, DoubleSide, FrontSide, Group, LinearFilter, MeshStandardMaterial, NearestFilter, SRGBColorSpace, TextureLoader } from "three";
 import ModelPart from "./ModelPart.js";
 import { getBoxUVs, setUvs } from "../ModelUtils.js";
 import PlayerModelOptions from "../interface/PlayerModelOptions.js";
@@ -13,6 +13,7 @@ export default class PlayerModel {
     public constructor(options: PlayerModelOptions) {
         const texture = new TextureLoader().load(stringToSkinUrl(options.skin));
         texture.magFilter = NearestFilter;
+        texture.minFilter = LinearFilter;
         texture.colorSpace = SRGBColorSpace;
 
         const material = new MeshStandardMaterial({
