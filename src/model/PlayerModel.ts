@@ -1,31 +1,27 @@
-import { BoxGeometry, DisplayP3ColorSpace, DoubleSide, FrontSide, Group, LinearFilter, MeshStandardMaterial, NearestFilter, SRGBColorSpace, TextureLoader } from "three";
+import { BoxGeometry, DisplayP3ColorSpace, DoubleSide, FrontSide, Group, LinearFilter, Material, MeshStandardMaterial, NearestFilter, SRGBColorSpace, Texture, TextureLoader } from "three";
 import ModelPart from "./ModelPart.js";
-import { getBoxUVs, setUvs } from "../ModelUtils.js";
+import { getBoxUVs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
 import PlayerModelOptions from "../interface/PlayerModelOptions.js";
 import { stringToSkinUrl } from "../Utils.js";
 
 export default class PlayerModel {
     private group = new Group();
     private modelParts: Map<string, ModelPart> = new Map();
-
-    // todo: add outer layer
+    private skinTexture: Texture | undefined;
+    private skinMaterial: Material;
+    private transparentSkinMaterial: Material;
 
     public constructor(options: PlayerModelOptions) {
-        const texture = new TextureLoader().load(stringToSkinUrl(options.skin));
-        texture.magFilter = NearestFilter;
-        texture.minFilter = LinearFilter;
-        texture.colorSpace = SRGBColorSpace;
-
-        const material = new MeshStandardMaterial({
-            map: texture,
+        this.skinMaterial = new MeshStandardMaterial({
             side: FrontSide
         });
-        const transparentMaterial = new MeshStandardMaterial({
-            map: texture,
+        this.transparentSkinMaterial = new MeshStandardMaterial({
             side: DoubleSide,
             transparent: true,
             alphaTest: 1e-5
         });
+
+        this.setSkin(options.skin);
 
 
         // body & jacket
@@ -33,14 +29,14 @@ export default class PlayerModel {
         setUvs(bodyGeometry, getBoxUVs(16, 16, 8, 12, 4, 64, 64));
         this.modelParts.set("body", new ModelPart(
             bodyGeometry,
-            material
+            this.skinMaterial
         ));
         const body = this.getBodyPart("body")!;
         const jacketGeometry = new BoxGeometry(8.5, 12.5, 4.5);
         setUvs(jacketGeometry, getBoxUVs(16, 32, 8, 12, 4, 64, 64));
         this.modelParts.set("jacket", new ModelPart(
             jacketGeometry,
-            transparentMaterial,
+            this.transparentSkinMaterial,
             {
                 part: body
             }
@@ -52,7 +48,7 @@ export default class PlayerModel {
         setUvs(headGeometry, getBoxUVs(0, 0, 8, 8, 8, 64, 64));
         this.modelParts.set("head", new ModelPart(
             headGeometry,
-            material,
+            this.skinMaterial,
             {
                 part: body,
                 yOffset: 10,
@@ -63,7 +59,7 @@ export default class PlayerModel {
         setUvs(hatGeometry, getBoxUVs(32, 0, 8, 8, 8, 64, 64));
         this.modelParts.set("hat", new ModelPart(
             hatGeometry,
-            transparentMaterial,
+            this.transparentSkinMaterial,
             {
                 part: this.getBodyPart("head")!
             }
@@ -73,7 +69,7 @@ export default class PlayerModel {
         // left arm & sleeve
         this.modelParts.set("armLeft", new ModelPart(
             new BoxGeometry(1, 1, 1),
-            material,
+            this.skinMaterial,
             {
                 part: body,
                 yAttachment: 4
@@ -81,7 +77,7 @@ export default class PlayerModel {
         ));
         this.modelParts.set("sleeveLeft", new ModelPart(
             new BoxGeometry(1, 1, 1),
-            transparentMaterial,
+            this.transparentSkinMaterial,
             {
                 part: this.getBodyPart("armLeft")!
             }
@@ -91,7 +87,7 @@ export default class PlayerModel {
         // right arm & sleeve
         this.modelParts.set("armRight", new ModelPart(
             new BoxGeometry(1, 1, 1),
-            material,
+            this.skinMaterial,
             {
                 part: body,
                 yAttachment: 4
@@ -99,7 +95,7 @@ export default class PlayerModel {
         ));
         this.modelParts.set("sleeveRight", new ModelPart(
             new BoxGeometry(1, 1, 1),
-            transparentMaterial,
+            this.transparentSkinMaterial,
             {
                 part: this.getBodyPart("armRight")!
             }
@@ -111,7 +107,7 @@ export default class PlayerModel {
         setUvs(legLeftGeometry, getBoxUVs(16, 48, 4, 12, 4, 64, 64));
         this.modelParts.set("legLeft", new ModelPart(
             legLeftGeometry,
-            material,
+            this.skinMaterial,
             {
                 part: body,
                 yOffset: -12,
@@ -123,7 +119,7 @@ export default class PlayerModel {
         setUvs(trouserLeftGeometry, getBoxUVs(0, 48, 4, 12, 4, 64, 64));
         this.modelParts.set("trouserLeft", new ModelPart(
             trouserLeftGeometry,
-            transparentMaterial,
+            this.transparentSkinMaterial,
             {
                 part: this.getBodyPart("legLeft")!
             }
@@ -135,7 +131,7 @@ export default class PlayerModel {
         setUvs(legRightGeometry, getBoxUVs(0, 16, 4, 12, 4, 64, 64));
         this.modelParts.set("legRight", new ModelPart(
             legRightGeometry,
-            material,
+            this.skinMaterial,
             {
                 part: body,
                 yOffset: -12,
@@ -147,7 +143,7 @@ export default class PlayerModel {
         setUvs(trouserRightGeometry, getBoxUVs(0, 32, 4, 12, 4, 64, 64));
         this.modelParts.set("trouserRight", new ModelPart(
             trouserRightGeometry,
-            transparentMaterial,
+            this.transparentSkinMaterial,
             {
                 part: this.getBodyPart("legRight")!
             }
@@ -188,5 +184,19 @@ export default class PlayerModel {
         const sleeveRight = this.modelParts.get("sleeveRight")!;
         sleeveRight.mesh.scale.set((armWidth + 0.5) / armWidth, 12.5 / 12, 5 / 4);
         setUvs(sleeveRight.geometry, getBoxUVs(40, 32, armWidth, 12, 4, 64, 64));
+    }
+
+    public setSkin(skin: string) {
+        if (this.skinTexture) {
+            this.skinTexture.dispose();
+        }
+
+        this.skinTexture = new TextureLoader().load(stringToSkinUrl(skin));
+        this.skinTexture.magFilter = NearestFilter;
+        this.skinTexture.minFilter = LinearFilter;
+        this.skinTexture.colorSpace = SRGBColorSpace;
+
+        updateMaterialTexture(this.skinMaterial, this.skinTexture, false);
+        updateMaterialTexture(this.transparentSkinMaterial, this.skinTexture, false);        
     }
 }

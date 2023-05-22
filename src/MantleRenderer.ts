@@ -10,6 +10,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import RendererOptions from "./interface/RendererOptions.js";
 import PlayerModel from "./model/PlayerModel.js";
 
+export type EventType = "resize" | "prerender" | "postrender";
+
 export default class MantleRenderer {
     private readonly renderer: WebGLRenderer;
     private readonly composer: EffectComposer | null = null;
@@ -18,7 +20,7 @@ export default class MantleRenderer {
     private readonly ambientLight: AmbientLight;
     public readonly player: PlayerModel;
     private readonly controls: OrbitControls;
-    private eventListeners: Map<string, (() => void)[]> = new Map();
+    private eventListeners: Map<EventType, (() => void)[]> = new Map();
 
     public constructor(options: RendererOptions) {
         this.scene = new Scene();
@@ -128,7 +130,7 @@ export default class MantleRenderer {
         this.callEvent("resize");
     }
 
-    public addEventListener(event: "resize", callback: () => void) {
+    public addEventListener(event: EventType, callback: () => void) {
         const callbacks = this.eventListeners.get(event);
         if (callbacks) {
             if (!callbacks.includes(callback)) {
@@ -139,7 +141,7 @@ export default class MantleRenderer {
         }
     }
 
-    public removeEventListener(event: "resize", callback: () => void) {
+    public removeEventListener(event: EventType, callback: () => void) {
         const callbacks = this.eventListeners.get(event);
         if (!callbacks) return;
         const index = callbacks.indexOf(callback);
@@ -148,7 +150,7 @@ export default class MantleRenderer {
         }
     }
 
-    private callEvent(event: "resize") {
+    private callEvent(event: EventType) {
         const callbacks = this.eventListeners.get(event);
         if (!callbacks) return;
         for (let callback of callbacks) {
@@ -157,6 +159,7 @@ export default class MantleRenderer {
     }
 
     public render(time: number) {
+        this.callEvent("prerender");
         // this.player.getBodyPart("body")!.pivot.rotation.y = time / 2_000;
 
         this.player.getBodyPart("armLeft")!.pivot.rotation.x = Math.sin(time / 150);
@@ -173,5 +176,6 @@ export default class MantleRenderer {
             this.renderer.render(this.scene, this.camera);
         }
         
+        this.callEvent("postrender");
     }
 }
