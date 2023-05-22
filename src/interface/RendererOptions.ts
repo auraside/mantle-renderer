@@ -7,5 +7,6 @@ export default interface RendererOptions {
 
     ambientLight?: LightOptions
 
-    skinUrl?: string
+    skin?: string
+    slim?: boolean // steve or alex model
 }

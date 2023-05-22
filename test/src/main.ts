@@ -10,7 +10,9 @@ const renderer = new Renderer({
     ambientLight: {
         intensity: 0.03
     },
-    antialias: true
+    antialias: true,
+    slim: false,
+    skin: "eye2ah"
 });
 
 function resize() {
@@ -19,3 +21,7 @@ function resize() {
 
 window.addEventListener("resize", resize);
 resize();
+
+
+document.querySelector("#steve")?.addEventListener("click", () => renderer.player.setSlim(false));
+document.querySelector("#alex")?.addEventListener("click", () => renderer.player.setSlim(true));
