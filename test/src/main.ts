@@ -10,9 +10,12 @@ const renderer = new Renderer({
     ambientLight: {
         intensity: 0.03
     },
-    antialias: true,
+    antialias: false,
     slim: false,
-    skin: "eye2ah"
+    skin: "eyez4h",
+    fxaa: true,
+    ssaa: false,
+    alpha: true
 });
 
 function resize() {
