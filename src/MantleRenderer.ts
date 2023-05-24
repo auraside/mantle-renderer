@@ -59,7 +59,7 @@ export default class MantleRenderer {
             });
 
             this.addEventListener("resize", () => {
-                const size = mantleRenderer.renderer.getDrawingBufferSize(new Vector2());
+                const size = this.renderer.getDrawingBufferSize(new Vector2());
                 renderTarget?.setSize(size.width, size.height);
             });
 
@@ -83,7 +83,7 @@ export default class MantleRenderer {
             
 
             this.addEventListener("resize", () => {
-                mantleRenderer.composer?.setSize(options.canvas.offsetWidth, options.canvas.offsetHeight);
+                this.composer?.setSize(options.canvas.offsetWidth, options.canvas.offsetHeight);
             });
 
             

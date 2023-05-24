@@ -1,0 +1,103 @@
+{
+  "type" : "PlayerItem",
+  "textureSize": [64, 64],
+  "models":
+  [
+    {
+      "type": "ModelBox",
+      "attachTo": "head",
+      "invertAxis": "xy",
+      "translate": [0, 2, 0],
+      "rotate": [2.5, 0, 0],
+      "submodels": [
+				{
+					"id": "bone",
+					"invertAxis": "xy",
+					"translate": [0, 7.20052, -3.99619],
+					"rotate": [2.5, 0, 0],
+					"submodels": [
+						{
+							"id": "bone3",
+							"invertAxis": "xy",
+							"translate": [0, 0, 1],
+							"boxes": [
+								{"coordinates": [-4, 0, -1, 8, 3, 8], "textureOffset": [0, 12], "sizeAdd": 0.01}
+							]
+						},
+						{
+							"id": "bone7",
+							"invertAxis": "xy",
+							"translate": [0, 3, 1],
+							"rotate": [12.5, 0, 0],
+							"submodels": [
+								{
+									"id": "bone4",
+									"invertAxis": "xy",
+									"translate": [0, -12, 3],
+									"boxes": [
+										{"coordinates": [-3, 12, -3, 6, 3, 6], "textureOffset": [0, 23]}
+									]
+								},
+								{
+									"id": "bone8",
+									"invertAxis": "xy",
+									"translate": [0, 3, 1],
+									"rotate": [22.5, 0, 0],
+									"submodels": [
+										{
+											"id": "bone5",
+											"invertAxis": "xy",
+											"translate": [0, 0, 0],
+											"boxes": [
+												{"coordinates": [-2, 0, 0, 4, 3, 4], "textureOffset": [24, 12]}
+											]
+										},
+										{
+											"id": "bone6",
+											"invertAxis": "xy",
+											"translate": [0, 3, 1.25],
+											"rotate": [22.5, 0, 0],
+											"boxes": [
+												{"coordinates": [-1, 0, -0.25, 2, 3, 2], "textureOffset": [0, 0]}
+											],
+											"submodels": [
+												{
+													"id": "bone9",
+													"invertAxis": "xy",
+													"translate": [0, 3, 0.25],
+													"rotate": [32.5, 0, 0],
+													"boxes": [
+														{"coordinates": [-0.5, 0, 0, 1, 2, 1], "textureOffset": [0, 12]}
+													],
+													"submodels": [
+														{
+															"id": "bone10",
+															"invertAxis": "xy",
+															"translate": [0, 2.25, 1],
+															"rotate": [27.5, 0, 0],
+															"boxes": [
+																{"coordinates": [-1, -1, -1, 2, 2, 2], "textureOffset": [0, 5]}
+															]
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"id": "bone2",
+					"invertAxis": "xy",
+					"translate": [0, -1.79948, 0.00381],
+					"boxes": [
+						{"coordinates": [-5, 7.5, -5, 10, 2, 10], "textureOffset": [0, 0]}
+					]
+				}
+			]
+		}
+	]
+}

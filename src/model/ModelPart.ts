@@ -7,10 +7,10 @@ export default class ModelPart {
 
     public constructor(
         public readonly geometry: BufferGeometry,
-        public readonly material: Material,
+        public readonly materials: Material | Material[],
         private readonly parent?: ModelPartParent
     ) {
-        this.mesh = new Mesh(this.geometry, this.material);
+        this.mesh = new Mesh(this.geometry, this.materials);
         this.pivot.add(this.mesh);
 
         if (this.parent) {
