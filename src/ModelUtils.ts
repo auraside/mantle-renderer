@@ -1,5 +1,5 @@
-import { BufferAttribute, BufferGeometry, Material, Texture, TextureLoader, Vector2 } from "three";
-import GenericModel, { Coordinate, GenericModelElement, GenericModelElementUvs, GenericModelFaceUv, GenericModelTexture } from "./interface/GenericModel.js"
+import { BufferAttribute, BufferGeometry, Group, Material, Mesh, Texture, Vector2 } from "three";
+import GenericModel, { Coordinate, GenericModelElement, GenericModelFaceUv, GenericModelTexture } from "./interface/GenericModel.js"
 import { average, degreesToRadians } from "./Utils.js";
 import ModelPart from "./model/ModelPart.js";
 
@@ -135,4 +135,17 @@ export function parseJavaBlockModel(json: any, textureUrl: string, attachTo: Mod
     }
 
     return model;
+}
+
+
+// Disposes of geometry, meshes & groups. Materials & textures still need to be manually disposed of.
+export function disposeOfGroup(object: Mesh | Group) {
+    object.traverse(child => {
+        if (child instanceof Mesh) {
+            const geometry: BufferGeometry = child.geometry;
+            if (geometry) {
+                geometry.dispose();
+            }
+        }
+    });
 }
