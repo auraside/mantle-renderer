@@ -17,6 +17,7 @@ export default class PlayerModel {
     private readonly transparentSkinMaterial: Material;
     private readonly models: ModelInfo[] = [];
     private cape: ModelInfo | null = null;
+    private onSkinLoad: (() => void) | null = null;
 
     private disposableObjects: DisposableObject[] = [];
 
@@ -32,7 +33,11 @@ export default class PlayerModel {
         });
         this.disposableObjects.push(this.transparentSkinMaterial);
 
-        this.setSkin(options.skin);
+        this.onSkinLoad = options.onSkinLoad || null;
+        this.setSkin(options.skin)
+        .then(() => {
+            if (this.onSkinLoad) this.onSkinLoad();
+        });
 
 
         // body & jacket

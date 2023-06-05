@@ -126,7 +126,8 @@ export default class MantleRenderer {
         if (options.player) {
             this.player = new PlayerModel(this, {
                 skin: options.player.skin || "mhf_steve",
-                slim: !!options.player.slim
+                slim: !!options.player.slim,
+                onSkinLoad: options.player.onSkinLoad
             });
             this.scene.add(this.player.getMesh());
             this.player.getMesh().rotation.y = 0.5;

@@ -3,6 +3,7 @@ import LightOptions from "./LightOptions.js"
 export interface RendererPlayerOptions {
     skin?: string // path, url, username or uuid
     slim?: boolean // steve or alex model
+    onSkinLoad?: () => void // callback for initial skin loading
 }
 
 export default interface RendererOptions {

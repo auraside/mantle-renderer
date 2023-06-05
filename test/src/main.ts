@@ -28,6 +28,9 @@ const renderer = new Renderer({
     ambientLight: {
         intensity: 0.03
     },
+    player: {
+        onSkinLoad: () => console.log("SKIN LOADED!")
+    },
     antialias: false,
     fxaa: true,
     ssaa: false,
