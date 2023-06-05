@@ -17,10 +17,10 @@ export default class MantleRenderer {
     private destroyed = false;
     private readonly renderer: WebGLRenderer;
     private readonly composer: EffectComposer | null = null;
-    private readonly scene = new Scene();
-    private readonly camera: PerspectiveCamera;
+    public readonly scene = new Scene();
+    public readonly camera: PerspectiveCamera;
     private readonly ambientLight: AmbientLight;
-    public readonly player: PlayerModel;
+    public readonly player: PlayerModel | undefined;
     private readonly controls: OrbitControls;
     private eventListeners: Map<EventType, (() => void)[]> = new Map();
     private lastRenderTime = 0;
@@ -34,7 +34,8 @@ export default class MantleRenderer {
         this.renderer = new WebGLRenderer({
             canvas: options.canvas,
             antialias: options.antialias,
-            alpha: !!options.alpha
+            alpha: !!options.alpha,
+            preserveDrawingBuffer: true
         });
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.setAnimationLoop(time => this.render(time));
@@ -122,15 +123,17 @@ export default class MantleRenderer {
         this.disposableObjects.push(this.ambientLight);
 
         // player model
-        this.player = new PlayerModel(this, {
-            skin: options.skin || "mhf_steve",
-            slim: !!options.slim
-        });
-        this.scene.add(this.player.getMesh());
-        this.player.getMesh().rotation.y = 0.5;
-        this.disposableObjects.push(this.player);
+        if (options.player) {
+            this.player = new PlayerModel(this, {
+                skin: options.player.skin || "mhf_steve",
+                slim: !!options.player.slim
+            });
+            this.scene.add(this.player.getMesh());
+            this.player.getMesh().rotation.y = 0.5;
+            this.disposableObjects.push(this.player);
 
-        this.camera.lookAt(this.player.getMesh().position);
+            this.camera.lookAt(this.player.getMesh().position);
+        }
 
         // point light (temporary)
         const light = new PointLight(0xffffff, 0.8, 1000);
@@ -202,8 +205,9 @@ export default class MantleRenderer {
 
     public destroy(clearCanvas?: boolean) {
         this.destroyed = true;
-        this.scene.remove(this.player.getMesh());
-
+        if (this.player) {
+            this.scene.remove(this.player.getMesh());
+        }
         if (clearCanvas) {
             this.renderer.clear();
         }

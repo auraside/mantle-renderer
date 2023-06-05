@@ -1,6 +1,6 @@
 import { BoxGeometry, DoubleSide, FrontSide, Group, LinearFilter, Material, MeshStandardMaterial, NearestFilter, SRGBColorSpace, Texture, TextureLoader, Vector2 } from "three";
 import ModelPart from "./ModelPart.js";
-import { disposeOfGroup, getBoxUVs, orderUvs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
+import { buildModel, disposeOfGroup, getBoxUVs, orderUvs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
 import PlayerModelOptions from "../interface/PlayerModelOptions.js";
 import { stringToSkinUrl } from "../Utils.js";
 import MantleRenderer from "../MantleRenderer.js";
@@ -230,84 +230,14 @@ export default class PlayerModel {
     }
 
     public addModel(model: GenericModel) {
-        const group = new Group();
+        if (!model.attachTo) throw "Model doesn't have an attachment specified";
+        const { modelInfo, mesh } = buildModel(model);
+        mesh.scale.set(1.001, 1.001, 1.001);
+        model.attachTo.pivot.add(mesh);
+        this.disposableObjects.push(...modelInfo.materials, ...modelInfo.textures);
 
-        const outModel: ModelInfo = {
-            textures: [],
-            materials: [],
-            mesh: group
-        }
-
-        const textures: {
-            [key: string]: {
-                name: string,
-                url: string,
-                width: number,
-                height: number,
-                material: Material
-            }
-        } = {};
-
-        const textureLoader = new TextureLoader();
-        const faceOrder: GenericModelFace[] = ["top", "bottom", "left", "right", "back", "front"]; // todo: order this to properly support multiple textures
-
-        for (let textureData of model.textures) {
-            const texture = textureLoader.load(textureData.url);
-            texture.magFilter = NearestFilter;
-            texture.minFilter = LinearFilter;
-            this.disposableObjects.push(texture);
-            outModel.textures.push(texture);
-
-            const material = new MeshStandardMaterial({
-                map: texture,
-                side: DoubleSide,
-                transparent: true
-            });
-            outModel.materials.push(material);
-            this.disposableObjects.push(material);
-
-            textures[textureData.name] = {
-                ...textureData,
-                material
-            };
-        }
-
-        for (let element of model.elements) {
-            const geometry = new BoxGeometry(...element.size);
-            const uvs: Map<GenericModelFace, Vector2[]> = new Map();
-
-            for (let i = 0; i < 6; i++) {
-                const uv = element.uv[faceOrder[i]];
-                const materialIndex = Object.keys(textures).indexOf(uv.texture);
-                const textureInfo = textures[uv.texture];
-                geometry.groups[i].materialIndex = materialIndex;
-                const vertices = getFaceVertices(uv.uv[0], uv.uv[1], uv.uv[2], uv.uv[3], textureInfo.width, textureInfo.height);
-                uvs.set(faceOrder[i], vertices);
-            }
-            
-            setUvs(geometry, orderUvs(uvs.get("top")!, uvs.get("bottom")!, uvs.get("left")!, uvs.get("right")!, uvs.get("front")!, uvs.get("back")!));
-
-            const part = new ModelPart(
-                geometry,
-                Object.values(textures).map(info => info.material)
-            );
-            part.pivot.position.set(...element.origin);
-            part.mesh.position.set(
-                element.position[0] - element.origin[0],
-                element.position[1] - element.origin[1],
-                element.position[2] - element.origin[2]
-            );
-            part.pivot.rotation.set(...element.rotation);
-
-            group.add(part.pivot);
-        }
-
-        group.position.set(...model.offset);
-        group.scale.set(1.001, 1.001, 1.001);
-        model.attachTo.pivot.add(group);
-
-        this.models.push(outModel);
-        return outModel;
+        this.models.push(modelInfo);
+        return modelInfo;
     }
 
     public removeModel(model: ModelInfo) {

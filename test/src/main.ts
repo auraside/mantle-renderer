@@ -1,6 +1,6 @@
 import './style.css'
 
-import Renderer, { parseJavaBlockModel } from "../../src";
+import Renderer, { buildModel, forceCenterMesh, parseJavaBlockModel } from "../../src";
 import ModelInfo from '../../src/interface/ModelInfo';
 
 const canvas = document.createElement("canvas");
@@ -10,8 +10,10 @@ document.querySelector("#app")!.appendChild(canvas);
 
 
 function loadModel(renderer: Renderer, id: string, bodyPart: string): Promise<ModelInfo> {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
+        if (!renderer.player) return reject("Player isn't in scene");
         fetch(`https://dev-assets.mantle.gg/model/${id}.json`).then(r => r.json()).then(r => {
+            if (!renderer.player) throw "Player isn't in scene";
             const model = parseJavaBlockModel(r, `https://dev-assets.mantle.gg/model/${id}.png`, renderer.player.getBodyPart(bodyPart)!, [-8, 8, -8]);
             const outModel = renderer.player.addModel(model);
             resolve(outModel);
@@ -27,8 +29,6 @@ const renderer = new Renderer({
         intensity: 0.03
     },
     antialias: false,
-    slim: false,
-    skin: "eye2ah",
     fxaa: true,
     ssaa: false,
     alpha: true
@@ -47,13 +47,30 @@ resize();
 
 
 
-document.querySelector("#steve")?.addEventListener("click", () => renderer.player.setSlim(false));
-document.querySelector("#alex")?.addEventListener("click", () => renderer.player.setSlim(true));
+document.querySelector("#steve")?.addEventListener("click", () => renderer.player?.setSlim(false));
+document.querySelector("#alex")?.addEventListener("click", () => renderer.player?.setSlim(true));
 document.querySelector("#destroy")?.addEventListener("click", () => renderer.destroy(true));
 document.querySelector("#remove-models")?.addEventListener("click", () => {
-    for (let model of renderer.player.getModels()) {
-        renderer.player.removeModel(model);
+    if (renderer.player) {
+        for (let model of renderer.player.getModels()) {
+            renderer.player.removeModel(model);
+        }
     }
 });
-document.querySelector("#chad-cape")?.addEventListener("click", () => renderer.player.setCape("https://dev-assets.mantle.gg/cape/chad.png"));
-document.querySelector("#glass-cape")?.addEventListener("click", () => renderer.player.setCape("https://dev-assets.mantle.gg/cape/glass.png"));
+document.querySelector("#chad-cape")?.addEventListener("click", () => renderer.player?.setCape("https://dev-assets.mantle.gg/cape/chad.png"));
+document.querySelector("#glass-cape")?.addEventListener("click", () => renderer.player?.setCape("https://dev-assets.mantle.gg/cape/glass.png"));
+
+
+
+
+fetch("https://dev-assets.mantle.gg/model/dimmadome.json").then(r => r.json()).then(r => {
+    const model = parseJavaBlockModel(r, "https://dev-assets.mantle.gg/model/dimmadome.png");
+    const builtModel = buildModel(model);
+
+    const mesh = forceCenterMesh(builtModel.mesh);
+    renderer.scene.add(mesh);
+
+    setTimeout(() => {
+        console.log(renderer.getCanvas().toDataURL("image/jpeg"));
+    }, 500);
+});
