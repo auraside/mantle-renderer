@@ -34,7 +34,7 @@ const renderer = new Renderer({
     alpha: true
 });
 
-loadModel(renderer, "scythe", "armLeft");
+// loadModel(renderer, "scythe", "armLeft");
 
 
 function resize() {
@@ -62,15 +62,21 @@ document.querySelector("#glass-cape")?.addEventListener("click", () => renderer.
 
 
 
-
-fetch("https://dev-assets.mantle.gg/model/dimmadome.json").then(r => r.json()).then(r => {
+const start = Date.now();
+fetch("https://dev-assets.mantle.gg/model/dimmadome.json").then(r => r.json()).then(async r => {
     const model = parseJavaBlockModel(r, "https://dev-assets.mantle.gg/model/dimmadome.png");
-    const builtModel = buildModel(model);
+    const builtModel = await buildModel(model);
 
     const mesh = forceCenterMesh(builtModel.mesh);
     renderer.scene.add(mesh);
 
-    setTimeout(() => {
+    const render = () => {
         console.log(renderer.getCanvas().toDataURL("image/jpeg"));
-    }, 500);
+        renderer.removeEventListener("postrender", render);
+        console.log("rendered! took", (Date.now() - start), "ms");
+    }
+
+    renderer.addEventListener("postrender", render);
+
+    
 });

@@ -153,12 +153,12 @@ export function disposeOfGroup(object: Mesh | Group) {
 }
 
 
-export function buildModel(model: GenericModel) {
+export async function buildModel(model: GenericModel) {
     const group = new Group();
 
     const outModel: ModelInfo = {
-        textures: [],
-        materials: [],
+        textures: Array(model.textures.length),
+        materials: Array(model.textures.length),
         mesh: group
     }
 
@@ -175,24 +175,35 @@ export function buildModel(model: GenericModel) {
     const textureLoader = new TextureLoader();
     const faceOrder: GenericModelFace[] = ["top", "bottom", "left", "right", "back", "front"]; // todo: order this to properly support multiple textures
 
-    for (let textureData of model.textures) {
-        const texture = textureLoader.load(textureData.url);
-        texture.magFilter = NearestFilter;
-        texture.minFilter = LinearFilter;
-        outModel.textures.push(texture);
+    const promises: Promise<void>[] = [];
 
-        const material = new MeshStandardMaterial({
-            map: texture,
-            side: DoubleSide,
-            transparent: true
+    for (let i = 0; i < model.textures.length; i++) {
+        const textureData = model.textures[i];
+
+        const promise = new Promise<void>(async resolve => {
+            const texture = await textureLoader.loadAsync(textureData.url);
+            texture.magFilter = NearestFilter;
+            texture.minFilter = LinearFilter;
+            outModel.textures[i] = texture;
+    
+            const material = new MeshStandardMaterial({
+                map: texture,
+                side: DoubleSide,
+                transparent: true
+            });
+            outModel.materials[i] = material;
+    
+            textures[textureData.name] = {
+                ...textureData,
+                material
+            };
+
+            resolve();
         });
-        outModel.materials.push(material);
-
-        textures[textureData.name] = {
-            ...textureData,
-            material
-        };
+        promises.push(promise);
     }
+
+    await Promise.allSettled(promises);
 
     for (let element of model.elements) {
         const geometry = new BoxGeometry(...element.size);
@@ -245,7 +256,6 @@ export function getModelCenter(mesh: Group | Mesh){
             if (geometry) {
                 geometry.computeBoundingBox();
                 const box = geometry.boundingBox!;
-                console.log(box.min, box.max);
                 if (unset) {
                     unset = false;
                     coords[0] = box.min;
@@ -269,7 +279,6 @@ export function forceCenterMesh(mesh: Group | Mesh) {
     const bounds = getModelCenter(mesh);
     const offset = bounds[1].sub(bounds[0]).divide(new Vector3(-2, -2, -2));
     mesh.position.set(offset.x, offset.y, offset.z);
-    console.log("offset:", offset);
 
     return group;
 }

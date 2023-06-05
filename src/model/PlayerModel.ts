@@ -211,7 +211,7 @@ export default class PlayerModel {
         setUvs(sleeveLeft.geometry, getBoxUVs(48, 48, armWidth, 12, 4, 64, 64));
     }
 
-    public setSkin(skin: string) {
+    public async setSkin(skin: string) {
         if (this.skinTexture) {
             const index = this.disposableObjects.indexOf(this.skinTexture);
             if (index >= 0) this.disposableObjects.splice(index, 1);
@@ -219,19 +219,19 @@ export default class PlayerModel {
             this.skinTexture.dispose();
         }
 
-        this.skinTexture = new TextureLoader().load(stringToSkinUrl(skin));
+        this.skinTexture = await new TextureLoader().loadAsync(stringToSkinUrl(skin));
         this.skinTexture.magFilter = NearestFilter;
         this.skinTexture.minFilter = LinearFilter;
         this.skinTexture.colorSpace = SRGBColorSpace;
         this.disposableObjects.push(this.skinTexture);
 
         updateMaterialTexture(this.skinMaterial, this.skinTexture, false);
-        updateMaterialTexture(this.transparentSkinMaterial, this.skinTexture, false);        
+        updateMaterialTexture(this.transparentSkinMaterial, this.skinTexture, false);
     }
 
-    public addModel(model: GenericModel) {
+    public async addModel(model: GenericModel) {
         if (!model.attachTo) throw "Model doesn't have an attachment specified";
-        const { modelInfo, mesh } = buildModel(model);
+        const { modelInfo, mesh } = await buildModel(model);
         mesh.scale.set(1.001, 1.001, 1.001);
         model.attachTo.pivot.add(mesh);
         this.disposableObjects.push(...modelInfo.materials, ...modelInfo.textures);
@@ -275,7 +275,7 @@ export default class PlayerModel {
         return [...this.models];
     }
 
-    public setCape(url: string | null) {
+    public async setCape(url: string | null) {
         if (this.cape) {
             this.removeModel(this.cape);
         }
@@ -285,7 +285,7 @@ export default class PlayerModel {
             return;
         }
 
-        const texture = new TextureLoader().load(url);
+        const texture = await new TextureLoader().loadAsync(url);
         texture.magFilter = NearestFilter;
         texture.minFilter = LinearFilter;
         texture.colorSpace = SRGBColorSpace;
