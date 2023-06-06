@@ -2,6 +2,7 @@ import './style.css'
 
 import Renderer, { parseJavaBlockModel } from "../../src";
 import ModelInfo from '../../src/interface/ModelInfo';
+import { BoxGeometry, CameraHelper, DirectionalLight, DirectionalLightHelper, DoubleSide, FrontSide, Mesh, MeshPhongMaterial, NoBlending, Object3D, PointLight, ShadowMaterial } from 'three';
 
 const canvas = document.createElement("canvas");
 document.querySelector("#app")!.appendChild(canvas);
@@ -27,7 +28,7 @@ const renderer = new Renderer({
     live: true,
     canvas,
     ambientLight: {
-        intensity: 0.03
+        intensity: 0
     },
     player: {
         onSkinLoad: () => console.log("SKIN LOADED!")
@@ -36,7 +37,8 @@ const renderer = new Renderer({
     fxaa: true,
     ssaa: false,
     alpha: true,
-    controls: true
+    controls: true,
+    shadows: true
 });
 
 loadModel(renderer, "scythe", "body");
@@ -65,3 +67,43 @@ document.querySelector("#remove-models")?.addEventListener("click", () => {
 document.querySelector("#chad-cape")?.addEventListener("click", () => renderer.player?.setCape("https://dev-assets.mantle.gg/cape/chad.png"));
 document.querySelector("#glass-cape")?.addEventListener("click", () => renderer.player?.setCape("https://dev-assets.mantle.gg/cape/glass.png"));
 document.querySelector("#screenshot")?.addEventListener("click", () => console.log(renderer.screenshot(1000, 1000, "png", 5)));
+
+
+
+const backgroundMaterial = new ShadowMaterial();
+
+const backgroundGeometry = new BoxGeometry(1000, 1000, 0.1);
+const backgroundMesh = new Mesh(backgroundGeometry, backgroundMaterial);
+backgroundMesh.castShadow = true;
+backgroundMesh.receiveShadow = true;
+backgroundMesh.rotation.x = 1.2;
+backgroundMesh.position.y = -25;
+renderer.scene.add(backgroundMesh);
+
+
+const pointLight = new DirectionalLight(0xffffff, 1.5);
+
+pointLight.shadow.camera.left = -300;
+pointLight.shadow.camera.right = 300;
+pointLight.shadow.camera.top = 500;
+pointLight.shadow.camera.bottom = -100;
+pointLight.shadow.bias = -0.005;
+pointLight.shadow.mapSize.width = 2048 * 8;
+pointLight.shadow.mapSize.height = 2048 * 8;
+pointLight.shadow.radius = 100;
+pointLight.shadow.blurSamples = 25;
+
+pointLight.position.set(0, 200, -200);
+pointLight.castShadow = true;
+pointLight.target.position.set(0, 0, -400);
+renderer.scene.add(pointLight);
+
+const playerMesh = renderer.player!.getMesh();
+playerMesh.castShadow = true;
+playerMesh.receiveShadow = true;
+
+renderer.scene.traverse(child => {
+    if (child.type == "Mesh") {
+        child.castShadow = true;
+    }
+});

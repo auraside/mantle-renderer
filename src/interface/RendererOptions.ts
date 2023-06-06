@@ -27,6 +27,7 @@ export default interface RendererOptions {
     fxaa?: boolean // better but more expensive antialiasing
     ssaa?: boolean // most expensive antialiasing (due to supersampling). causes goofy colour banding for now
     bloom?: RendererBloomOptions
+    shadows?: boolean // expensive
 
-    controls?: boolean
+    controls?: boolean // mouse pointer controls
 }

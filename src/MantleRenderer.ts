@@ -45,6 +45,11 @@ export default class MantleRenderer {
             powerPreference: "high-performance"
         });
         this.renderer.setPixelRatio(platformUtils().getDevicePixelRatio());
+        if (options.shadows) {
+            this.renderer.shadowMap.enabled = true;
+            this.renderer.shadowMap.type = PCFSoftShadowMap;
+        }
+
         if (options.live) {
             this.renderer.setAnimationLoop(time => this.render(time));
         }
@@ -161,12 +166,6 @@ export default class MantleRenderer {
 
             this.camera.lookAt(this.player.getMesh().position);
         }
-
-        // point light (temporary)
-        const light = new PointLight(0xffffff, 0.8, 1000);
-        this.camera.add(light);
-        light.position.set(0, 20, -10);
-        this.disposableObjects.push(light);
     }
 
     public setSize(width: number, height: number) {
