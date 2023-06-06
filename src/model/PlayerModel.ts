@@ -1,11 +1,10 @@
-import { BoxGeometry, DoubleSide, FrontSide, Group, LinearFilter, Material, MeshStandardMaterial, NearestFilter, SRGBColorSpace, Texture, TextureLoader, Vector2 } from "three";
+import { BoxGeometry, DoubleSide, FrontSide, Group, LinearFilter, Material, MeshStandardMaterial, NearestFilter, SRGBColorSpace, Texture } from "three";
 import ModelPart from "./ModelPart.js";
-import { buildModel, disposeOfGroup, getBoxUVs, orderUvs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
+import { buildModel, disposeOfGroup, getBoxUVs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
 import PlayerModelOptions from "../interface/PlayerModelOptions.js";
-import { stringToSkinUrl } from "../Utils.js";
+import { platformUtils } from "../Utils.js";
 import MantleRenderer from "../MantleRenderer.js";
-import GenericModel, { GenericModelFace } from "../interface/GenericModel.js";
-import { getFaceVertices } from "../ModelUtils.js";
+import GenericModel from "../interface/GenericModel.js";
 import DisposableObject from "../interface/DisposableObject.js";
 import ModelInfo from "../interface/ModelInfo.js";
 
@@ -224,7 +223,7 @@ export default class PlayerModel {
             this.skinTexture.dispose();
         }
 
-        this.skinTexture = await new TextureLoader().loadAsync(stringToSkinUrl(skin));
+        this.skinTexture = await platformUtils().createTexture(skin);
         this.skinTexture.magFilter = NearestFilter;
         this.skinTexture.minFilter = LinearFilter;
         this.skinTexture.colorSpace = SRGBColorSpace;
@@ -290,7 +289,7 @@ export default class PlayerModel {
             return;
         }
 
-        const texture = await new TextureLoader().loadAsync(url);
+        const texture = await platformUtils().createTexture(url);
         texture.magFilter = NearestFilter;
         texture.minFilter = LinearFilter;
         texture.colorSpace = SRGBColorSpace;

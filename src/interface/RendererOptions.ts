@@ -1,3 +1,4 @@
+import { Canvas3d } from "../platformSpecifics/BasePlatformUtils.js"
 import LightOptions from "./LightOptions.js"
 
 export interface RendererPlayerOptions {
@@ -7,7 +8,8 @@ export interface RendererPlayerOptions {
 }
 
 export default interface RendererOptions {
-    canvas: HTMLCanvasElement
+    live: boolean
+    canvas?: HTMLCanvasElement | Canvas3d
     fov?: number // field of view of camera. defaults to 70 (degrees)
     antialias?: boolean // simple antialiasing
     alpha?: boolean // transparent background
@@ -18,4 +20,6 @@ export default interface RendererOptions {
 
     fxaa?: boolean // better but more expensive antialiasing
     ssaa?: boolean // most expensive antialiasing (due to supersampling). causes goofy colour banding for now
+
+    controls?: boolean
 }

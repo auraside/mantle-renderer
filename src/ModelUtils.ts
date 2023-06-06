@@ -1,9 +1,8 @@
-import { BoxGeometry, BufferAttribute, BufferGeometry, DoubleSide, Group, LinearFilter, Material, Mesh, MeshStandardMaterial, NearestFilter, Texture, TextureLoader, Vector2, Vector3 } from "three";
+import { BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, DoubleSide, Group, LinearFilter, Material, Mesh, MeshStandardMaterial, NearestFilter, Texture, Vector2 } from "three";
 import GenericModel, { Coordinate, GenericModelElement, GenericModelFace, GenericModelFaceUv, GenericModelTexture } from "./interface/GenericModel.js"
-import { average, degreesToRadians } from "./Utils.js";
+import { average, degreesToRadians, platformUtils } from "./Utils.js";
 import ModelPart from "./model/ModelPart.js";
 import ModelInfo from "./interface/ModelInfo.js";
-import BoundingBox from "./interface/BoundingBox.js";
 
 export function getFaceVertices(x1: number, y1: number, x2: number, y2: number, textureWidth: number, textureHeight: number) {
     return [
@@ -172,7 +171,6 @@ export async function buildModel(model: GenericModel) {
         }
     } = {};
 
-    const textureLoader = new TextureLoader();
     const faceOrder: GenericModelFace[] = ["top", "bottom", "left", "right", "back", "front"]; // todo: order this to properly support multiple textures
 
     const promises: Promise<void>[] = [];
@@ -181,7 +179,7 @@ export async function buildModel(model: GenericModel) {
         const textureData = model.textures[i];
 
         const promise = new Promise<void>(async resolve => {
-            const texture = await textureLoader.loadAsync(textureData.url);
+            const texture = await platformUtils().createTexture(textureData.url);
             texture.magFilter = NearestFilter;
             texture.minFilter = LinearFilter;
             outModel.textures[i] = texture;

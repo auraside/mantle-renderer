@@ -1,9 +1,4 @@
-export function stringToSkinUrl(string: string) {
-    if (string.startsWith("./") || string.startsWith("../") || string.startsWith("/") || string.startsWith("http://") || string.startsWith("https://")) {
-        return string;
-    }
-    return "https://api.cosmetica.cc/get/skin?user=" + string;
-}
+import PlatformSpecifics from "./platformSpecifics/ServerPlatformUtils.js";
 
 export function average(...numbers: number[]) {
     let total = 0;
@@ -19,4 +14,9 @@ export function degreesToRadians(degrees: number) {
 
 export function radiansToDegrees(radians: number) {
     return radians / Math.PI * 180;
+}
+
+const platformSpecifics = new PlatformSpecifics();
+export function platformUtils() {
+    return platformSpecifics;
 }

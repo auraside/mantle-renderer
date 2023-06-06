@@ -1,4 +1,4 @@
-import { AmbientLight, FloatType, LinearFilter, NoToneMapping, PerspectiveCamera, PointLight, RGBAFormat, SRGBColorSpace, Scene, Vector2, WebGLRenderTarget, WebGLRenderer } from "three";
+import { AmbientLight, FloatType, LinearFilter, NoToneMapping, PCFSoftShadowMap, PerspectiveCamera, PointLight, RGBAFormat, SRGBColorSpace, Scene, UnsignedByteType, Vector2, WebGLRenderTarget, WebGLRenderer } from "three";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
@@ -10,6 +10,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import RendererOptions from "./interface/RendererOptions.js";
 import PlayerModel from "./model/PlayerModel.js";
 import DisposableObject from "./interface/DisposableObject.js";
+import { Platform } from "./platformSpecifics/BasePlatformUtils.js";
+import { platformUtils } from "./Utils.js";
 
 export type EventType = "resize" | "prerender" | "postrender";
 
@@ -21,7 +23,7 @@ export default class MantleRenderer {
     public readonly camera: PerspectiveCamera;
     private readonly ambientLight: AmbientLight;
     public readonly player: PlayerModel | undefined;
-    private readonly controls: OrbitControls;
+    private readonly controls: OrbitControls | undefined;
     private eventListeners: Map<EventType, (() => void)[]> = new Map();
     private lastRenderTime = 0;
     private renderTime = 0;
@@ -30,15 +32,20 @@ export default class MantleRenderer {
     public constructor(options: RendererOptions) {
         this.scene = new Scene();
 
+        const canvas = options.canvas || platformUtils().create3dCanvas(500, 500);
+
         // renderer
         this.renderer = new WebGLRenderer({
-            canvas: options.canvas,
+            canvas: canvas as HTMLCanvasElement,
             antialias: options.antialias,
             alpha: !!options.alpha,
-            preserveDrawingBuffer: true
+            preserveDrawingBuffer: true,
+            powerPreference: "high-performance"
         });
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setAnimationLoop(time => this.render(time));
+        this.renderer.setPixelRatio(platformUtils().getDevicePixelRatio());
+        if (options.live) {
+            this.renderer.setAnimationLoop(time => this.render(time));
+        }
         this.disposableObjects.push(this.renderer);
         
         // camera
@@ -76,7 +83,7 @@ export default class MantleRenderer {
             if (options.ssaa) {
                 const ssaaPass = new SSAARenderPass(this.scene, this.camera, 0x000000, 0);
                 function ssaaResize() {
-                    ssaaPass.setSize(options.canvas.offsetWidth, options.canvas.offsetHeight);
+                    ssaaPass.setSize(canvas.offsetWidth, canvas.offsetHeight);
                 }
                 ssaaResize();
                 ssaaPass.unbiased = true;
@@ -92,7 +99,7 @@ export default class MantleRenderer {
             
 
             this.addEventListener("resize", () => {
-                this.composer?.setSize(options.canvas.offsetWidth, options.canvas.offsetHeight);
+                this.composer?.setSize(canvas.offsetWidth, canvas.offsetHeight);
             });
 
             
@@ -104,8 +111,8 @@ export default class MantleRenderer {
             if (options.fxaa) {
                 const fxaaPass = new ShaderPass(FXAAShader);
                 function fxaaResize() {
-                    fxaaPass.material.uniforms["resolution"].value.x = 1 / (options.canvas.offsetWidth * mantleRenderer.renderer.getPixelRatio());
-                    fxaaPass.material.uniforms["resolution"].value.y = 1 / (options.canvas.offsetHeight * mantleRenderer.renderer.getPixelRatio());
+                    fxaaPass.material.uniforms["resolution"].value.x = 1 / (canvas.offsetWidth * mantleRenderer.renderer.getPixelRatio());
+                    fxaaPass.material.uniforms["resolution"].value.y = 1 / (canvas.offsetHeight * mantleRenderer.renderer.getPixelRatio());
                 }
                 fxaaResize();
                 this.composer.addPass(fxaaPass);
@@ -114,8 +121,14 @@ export default class MantleRenderer {
             }
         }
 
-        this.controls = new OrbitControls(this.camera, options.canvas);
-        this.disposableObjects.push(this.controls);
+        if (options.controls) {
+            if (platformUtils().getPlatform() == Platform.SERVER) {
+                console.warn("Controls are automatically disabled as they aren't supported server-side.");
+            } else {
+                this.controls = new OrbitControls(this.camera, canvas as HTMLCanvasElement);
+                this.disposableObjects.push(this.controls);
+            }
+        }
 
         // ambient light
         this.ambientLight = new AmbientLight(options.ambientLight?.color ?? 0xffffff, options.ambientLight?.intensity ?? 0);
@@ -125,7 +138,7 @@ export default class MantleRenderer {
         // player model
         if (options.player) {
             this.player = new PlayerModel(this, {
-                skin: options.player.skin || "mhf_steve",
+                skin: options.player.skin || "https://api.cosmetica.cc/get/skin?user=mhf_steve",
                 slim: !!options.player.slim,
                 onSkinLoad: options.player.onSkinLoad
             });
@@ -193,7 +206,7 @@ export default class MantleRenderer {
         this.renderTime = time;
         this.callEvent("prerender");
         
-        this.controls.update();
+        this.controls?.update();
 
         if (this.composer) {
             this.composer.render(time);
@@ -221,5 +234,57 @@ export default class MantleRenderer {
 
     public getCanvas() {
         return this.renderer.domElement;
+    }
+
+    public screenshot(width: number, height: number) {
+        const cameraAspect = this.camera.aspect;
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+
+        const canvas = platformUtils().create3dCanvas(width, height);
+        const renderer = new WebGLRenderer({
+            canvas: canvas as unknown as HTMLCanvasElement,
+            alpha: true,
+            powerPreference: "high-performance",
+            antialias: true,
+            context: canvas.getContext("3d")
+        });
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = PCFSoftShadowMap;
+
+        const renderTarget = new WebGLRenderTarget(width, height, {
+            minFilter: LinearFilter,
+            magFilter: LinearFilter,
+            format: RGBAFormat,
+            type: UnsignedByteType
+        });
+        renderer.setRenderTarget(renderTarget);
+        renderer.render(this.scene, this.camera);
+
+        const frameBufferPixels = new Uint8Array(width * height * 4);
+        const context = renderer.getContext();
+        context.readPixels(0, 0, width, height, context.RGBA, context.UNSIGNED_BYTE, frameBufferPixels);
+
+        const pixels = new Uint8Array(width * height * 4);
+        for (let fbRow = 0; fbRow < height; fbRow++) { // framebuffer starts in bottom left but should be top left, invert vertically
+            let rowData = frameBufferPixels.subarray(fbRow * width * 4, (fbRow + 1) * width * 4);
+            let imgRow = height - fbRow - 1;
+            pixels.set(rowData, imgRow * width * 4);
+        }
+
+        const canvas2d = platformUtils().create2dCanvas(width, height);
+        const ctx = canvas2d.getContext("2d");
+        const imageData = ctx.createImageData(width, height);
+        imageData.data.set(pixels);
+        ctx.putImageData(imageData, 0, 0);
+
+        console.log("taken screenshot!");
+
+
+
+        this.camera.aspect = cameraAspect;
+        this.camera.updateProjectionMatrix();
+
+        return canvas2d.toDataURL("image/png");
     }
 }

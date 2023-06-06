@@ -1,7 +1,8 @@
 import './style.css'
 
-import Renderer, { buildModel, parseJavaBlockModel } from "../../src";
+import Renderer, { parseJavaBlockModel } from "../../src";
 import ModelInfo from '../../src/interface/ModelInfo';
+import * as THREE from 'three';
 
 const canvas = document.createElement("canvas");
 document.querySelector("#app")!.appendChild(canvas);
@@ -24,6 +25,7 @@ function loadModel(renderer: Renderer, id: string, bodyPart: string): Promise<Mo
 
 
 const renderer = new Renderer({
+    live: true,
     canvas,
     ambientLight: {
         intensity: 0.03
@@ -34,7 +36,8 @@ const renderer = new Renderer({
     antialias: false,
     fxaa: true,
     ssaa: false,
-    alpha: true
+    alpha: true,
+    controls: true
 });
 
 loadModel(renderer, "scythe", "body");
@@ -62,6 +65,7 @@ document.querySelector("#remove-models")?.addEventListener("click", () => {
 });
 document.querySelector("#chad-cape")?.addEventListener("click", () => renderer.player?.setCape("https://dev-assets.mantle.gg/cape/chad.png"));
 document.querySelector("#glass-cape")?.addEventListener("click", () => renderer.player?.setCape("https://dev-assets.mantle.gg/cape/glass.png"));
+document.querySelector("#screenshot")?.addEventListener("click", () => console.log(renderer.screenshot(500, 500)));
 
 
 

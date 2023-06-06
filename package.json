@@ -3,25 +3,33 @@
   "version": "0.1.0",
   "description": "",
   "main": "dist/index.js",
+  "browser": {
+    "./src/platformSpecifics/ServerPlatformUtils.js": "./src/platformSpecifics/ClientPlatformUtils.js"
+  },
   "type": "module",
   "scripts": {
     "dev": "npm --prefix test run dev",
+    "dev:flush": "npx rimraf node_modules/.vite && npm run dev",
     "watch": "npx tsc -w",
     "rimraf": "./node_modules/rimraf/bin.js",
     "clean": "npx rimraf dist/",
     "build": "npm run clean && npx tsc",
-    "i": "npm install && npm --prefix test install"
+    "i": "npm install && npm --prefix test install",
+    "ssr": "npx ts-node ./ssr/main.ts"
   },
   "keywords": [],
   "author": "eyezah",
   "license": "ARR",
   "devDependencies": {
+    "@types/gl": "^6.0.2",
     "@types/three": "^0.152.0",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
   },
   "dependencies": {
+    "canvas": "^2.11.2",
+    "gl": "^6.0.2",
     "three": "^0.152.2"
   }
 }
