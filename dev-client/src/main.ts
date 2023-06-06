@@ -2,7 +2,7 @@ import './style.css'
 
 import Renderer, { parseJavaBlockModel } from "../../src";
 import ModelInfo from '../../src/interface/ModelInfo';
-import { BoxGeometry, CameraHelper, DirectionalLight, DirectionalLightHelper, DoubleSide, FrontSide, Mesh, MeshPhongMaterial, NoBlending, Object3D, PointLight, ShadowMaterial } from 'three';
+import { BoxGeometry, DirectionalLight, Mesh, ShadowMaterial } from 'three';
 
 const canvas = document.createElement("canvas");
 document.querySelector("#app")!.appendChild(canvas);
@@ -13,10 +13,17 @@ document.querySelector("#app")!.appendChild(canvas);
 function loadModel(renderer: Renderer, id: string, bodyPart: string): Promise<ModelInfo> {
     return new Promise((resolve, reject) => {
         if (!renderer.player) return reject("Player isn't in scene");
-        fetch(`https://dev-assets.mantle.gg/model/${id}.json`).then(r => r.json()).then(r => {
+        fetch(`https://dev-assets.mantle.gg/model/${id}.json`).then(r => r.json()).then(async r => {
             if (!renderer.player) throw "Player isn't in scene";
             const model = parseJavaBlockModel(r, `https://dev-assets.mantle.gg/model/${id}.png`, [-8, 8, -8], renderer.player.getBodyPart(bodyPart)!);
-            const outModel = renderer.player.addModel(model, true);
+            const outModel = await renderer.player.addModel(model, true);
+
+            outModel.mesh.traverse(child => {
+                if (child.type == "Mesh") {
+                    child.castShadow = true;
+                }
+            })
+
             resolve(outModel);
         });
     });
@@ -71,6 +78,7 @@ document.querySelector("#screenshot")?.addEventListener("click", () => console.l
 
 
 const backgroundMaterial = new ShadowMaterial();
+backgroundMaterial.opacity = 0.3;
 
 const backgroundGeometry = new BoxGeometry(1000, 1000, 0.1);
 const backgroundMesh = new Mesh(backgroundGeometry, backgroundMaterial);

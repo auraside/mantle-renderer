@@ -8,9 +8,9 @@ export interface RendererPlayerOptions {
 }
 
 export interface RendererBloomOptions {
-    threshold: number
-    strength: number
-    radius: number
+    threshold: number // how bright something has to be to start to bloom
+    strength: number // intensity of bloom
+    radius: number // spread of bloom
 }
 
 export default interface RendererOptions {

@@ -190,7 +190,8 @@ export async function buildModel(model: GenericModel, srgb?: boolean) {
             const material = new MeshStandardMaterial({
                 map: texture,
                 side: DoubleSide,
-                transparent: true
+                transparent: true,
+                alphaTest: 1e-5
             });
             outModel.materials[i] = material;
     
