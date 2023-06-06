@@ -151,7 +151,7 @@ export default class MantleRenderer {
         // player model
         if (options.player) {
             this.player = new PlayerModel(this, {
-                skin: options.player.skin || "https://api.cosmetica.cc/get/skin?user=mhf_steve",
+                skin: options.player.skin || "https://textures.minecraft.net/texture/31f477eb1a7beee631c2ca64d06f8f68fa93a3386d04452ab27f43acdf1b60cb",
                 slim: !!options.player.slim,
                 onSkinLoad: options.player.onSkinLoad
             });

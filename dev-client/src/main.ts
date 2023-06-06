@@ -15,7 +15,7 @@ function loadModel(renderer: Renderer, id: string, bodyPart: string): Promise<Mo
         fetch(`https://dev-assets.mantle.gg/model/${id}.json`).then(r => r.json()).then(r => {
             if (!renderer.player) throw "Player isn't in scene";
             const model = parseJavaBlockModel(r, `https://dev-assets.mantle.gg/model/${id}.png`, [-8, 8, -8], renderer.player.getBodyPart(bodyPart)!);
-            const outModel = renderer.player.addModel(model);
+            const outModel = renderer.player.addModel(model, true);
             resolve(outModel);
         });
     });
@@ -32,7 +32,7 @@ const renderer = new Renderer({
     player: {
         onSkinLoad: () => console.log("SKIN LOADED!")
     },
-    antialias: false,
+    antialias: true,
     fxaa: true,
     ssaa: false,
     alpha: true,

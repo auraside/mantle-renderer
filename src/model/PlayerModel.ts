@@ -226,16 +226,16 @@ export default class PlayerModel {
         this.skinTexture = await platformUtils().createTexture(skin);
         this.skinTexture.magFilter = NearestFilter;
         this.skinTexture.minFilter = LinearFilter;
-        // this.skinTexture.colorSpace = SRGBColorSpace; // todo: figure out why this complains
+        this.skinTexture.colorSpace = SRGBColorSpace;
         this.disposableObjects.push(this.skinTexture);
 
         updateMaterialTexture(this.skinMaterial, this.skinTexture, false);
         updateMaterialTexture(this.transparentSkinMaterial, this.skinTexture, false);
     }
 
-    public async addModel(model: GenericModel) {
+    public async addModel(model: GenericModel, srgb?: boolean) {
         if (!model.attachTo) throw "Model doesn't have an attachment specified";
-        const { modelInfo, mesh } = await buildModel(model);
+        const { modelInfo, mesh } = await buildModel(model, srgb);
         mesh.scale.set(1.001, 1.001, 1.001);
         model.attachTo.pivot.add(mesh);
         this.disposableObjects.push(...modelInfo.materials, ...modelInfo.textures);
