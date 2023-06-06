@@ -2,7 +2,6 @@ import './style.css'
 
 import Renderer, { parseJavaBlockModel } from "../../src";
 import ModelInfo from '../../src/interface/ModelInfo';
-import * as THREE from 'three';
 
 const canvas = document.createElement("canvas");
 document.querySelector("#app")!.appendChild(canvas);
@@ -65,7 +64,7 @@ document.querySelector("#remove-models")?.addEventListener("click", () => {
 });
 document.querySelector("#chad-cape")?.addEventListener("click", () => renderer.player?.setCape("https://dev-assets.mantle.gg/cape/chad.png"));
 document.querySelector("#glass-cape")?.addEventListener("click", () => renderer.player?.setCape("https://dev-assets.mantle.gg/cape/glass.png"));
-document.querySelector("#screenshot")?.addEventListener("click", () => console.log(renderer.screenshot(500, 500)));
+document.querySelector("#screenshot")?.addEventListener("click", () => console.log(renderer.screenshot(1000, 1000, "png", 5)));
 
 
 

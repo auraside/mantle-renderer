@@ -7,6 +7,12 @@ export interface RendererPlayerOptions {
     onSkinLoad?: () => void // callback for initial skin loading
 }
 
+export interface RendererBloomOptions {
+    threshold: number
+    strength: number
+    radius: number
+}
+
 export default interface RendererOptions {
     live: boolean
     canvas?: HTMLCanvasElement | Canvas3d
@@ -20,6 +26,7 @@ export default interface RendererOptions {
 
     fxaa?: boolean // better but more expensive antialiasing
     ssaa?: boolean // most expensive antialiasing (due to supersampling). causes goofy colour banding for now
+    bloom?: RendererBloomOptions
 
     controls?: boolean
 }

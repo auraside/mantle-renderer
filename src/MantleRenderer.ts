@@ -4,7 +4,8 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { FXAAShader } from "three/addons/shaders/FXAAShader.js";
 import { GammaCorrectionShader } from "three/addons/shaders/GammaCorrectionShader.js";
-import { SSAARenderPass } from "three/addons/postprocessing/SSAARenderPass.js"
+import { SSAARenderPass } from "three/addons/postprocessing/SSAARenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import RendererOptions from "./interface/RendererOptions.js";
@@ -12,6 +13,7 @@ import PlayerModel from "./model/PlayerModel.js";
 import DisposableObject from "./interface/DisposableObject.js";
 import { Platform } from "./platformSpecifics/BasePlatformUtils.js";
 import { platformUtils } from "./Utils.js";
+import { Canvas } from "canvas";
 
 export type EventType = "resize" | "prerender" | "postrender";
 
@@ -118,6 +120,17 @@ export default class MantleRenderer {
                 this.composer.addPass(fxaaPass);
                 this.disposableObjects.push(fxaaPass);
                 this.addEventListener("resize", fxaaResize);
+            }
+
+            if (options.bloom) {
+                const bloomPass = new UnrealBloomPass(new Vector2(canvas.offsetWidth * this.renderer.getPixelRatio(), canvas.offsetHeight * this.renderer.getPixelRatio()), options.bloom.strength, options.bloom.radius, options.bloom.threshold);
+                this.disposableObjects.push(bloomPass);
+                this.composer.addPass(bloomPass);
+                function bloomResize() {
+                    bloomPass.resolution.setX(canvas.offsetWidth * mantleRenderer.renderer.getPixelRatio());
+                    bloomPass.resolution.setY(canvas.offsetHeight * mantleRenderer.renderer.getPixelRatio());
+                }
+                this.addEventListener("resize", bloomResize);
             }
         }
 
@@ -228,7 +241,9 @@ export default class MantleRenderer {
 
         
         for (let object of this.disposableObjects) {
-            object.dispose();
+            try {
+                object.dispose();
+            } catch {}
         }
     }
 
@@ -236,7 +251,15 @@ export default class MantleRenderer {
         return this.renderer.domElement;
     }
 
-    public screenshot(width: number, height: number) {
+    // Anti-Aliasing is patchy client-side, uasge of this is only encouraged for server-side rendering. Client side applications can just .toDataURL() the canvas.
+    public screenshot(width: number, height: number, mimeType: "png" | "jpeg", superSampling?: number) {
+        const start = Date.now();
+
+        superSampling = Math.max(Math.round(superSampling || 1), 1);
+
+        width *= superSampling;
+        height *= superSampling;
+
         const cameraAspect = this.camera.aspect;
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
@@ -260,13 +283,14 @@ export default class MantleRenderer {
         });
         renderer.setRenderTarget(renderTarget);
         renderer.render(this.scene, this.camera);
+        
 
         const frameBufferPixels = new Uint8Array(width * height * 4);
         const context = renderer.getContext();
         context.readPixels(0, 0, width, height, context.RGBA, context.UNSIGNED_BYTE, frameBufferPixels);
 
         const pixels = new Uint8Array(width * height * 4);
-        for (let fbRow = 0; fbRow < height; fbRow++) { // framebuffer starts in bottom left but should be top left, invert vertically
+        for (let fbRow = 0; fbRow < height; fbRow++) {
             let rowData = frameBufferPixels.subarray(fbRow * width * 4, (fbRow + 1) * width * 4);
             let imgRow = height - fbRow - 1;
             pixels.set(rowData, imgRow * width * 4);
@@ -278,13 +302,29 @@ export default class MantleRenderer {
         imageData.data.set(pixels);
         ctx.putImageData(imageData, 0, 0);
 
-        console.log("taken screenshot!");
-
 
 
         this.camera.aspect = cameraAspect;
         this.camera.updateProjectionMatrix();
 
-        return canvas2d.toDataURL("image/png");
+        try { // renderer dispose fails if server-side but still cleans up
+            renderer.dispose();
+        } catch {}
+        renderTarget.dispose();
+
+        if (superSampling > 1) {
+            const originalWidth = width / superSampling;
+            const originalHeight = height / superSampling;
+
+            const shrinkCanvas = platformUtils().create2dCanvas(originalWidth, originalHeight) as Canvas;
+            const ctx = shrinkCanvas.getContext("2d");
+            ctx.drawImage(canvas2d, 0, 0, originalWidth, originalHeight);
+            var base64 = shrinkCanvas.toDataURL(("image/" + mimeType) as any);
+        } else {
+            var base64 = canvas2d.toDataURL(("image/" + mimeType) as any);
+        }
+
+        console.log("screenshot took " + (Date.now() - start) + "ms");
+        return base64;
     }
 }

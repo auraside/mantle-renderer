@@ -10,14 +10,14 @@ try {
 const renderer = new MantleRenderer({
     live: false,
     ambientLight: {
-        intensity: 0.03,
+        intensity: 0.5,
         color: 0xffffff
     },
     player: {
         onSkinLoad: () => {
             console.log("skin loaded!");
             renderer.render(0);
-            const imageB64 = renderer.screenshot(700, 700);
+            const imageB64 = renderer.screenshot(1000, 1000, "png", 5);
             const image = imageB64.split(",", 2)[1];
             FS.writeFileSync(imagePath, Buffer.from(image, "base64"));
             console.log("Saved screenshot to 'test.png'");
@@ -25,5 +25,10 @@ const renderer = new MantleRenderer({
     },
     alpha: true,
     antialias: true,
-    fxaa: true
+    fxaa: true,
+    bloom: {
+        threshold: 0,
+        strength: 3,
+        radius: 1
+    }
 });
