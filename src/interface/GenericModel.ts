@@ -35,8 +35,8 @@ export interface GenericModelElement {
 }
 
 export default interface GenericModel {
-    attachTo: ModelPart
-    offset: Coordinate
+    attachTo?: ModelPart
+    offset?: Coordinate
 
     textures: GenericModelTexture[]
     elements: GenericModelElement[]

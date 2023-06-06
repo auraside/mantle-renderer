@@ -1,11 +1,13 @@
 import { BoxGeometry, DoubleSide, FrontSide, Group, LinearFilter, Material, MeshStandardMaterial, NearestFilter, SRGBColorSpace, Texture, TextureLoader, Vector2 } from "three";
 import ModelPart from "./ModelPart.js";
-import { getBoxUVs, orderUvs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
+import { buildModel, disposeOfGroup, getBoxUVs, orderUvs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
 import PlayerModelOptions from "../interface/PlayerModelOptions.js";
 import { stringToSkinUrl } from "../Utils.js";
 import MantleRenderer from "../MantleRenderer.js";
 import GenericModel, { GenericModelFace } from "../interface/GenericModel.js";
 import { getFaceVertices } from "../ModelUtils.js";
+import DisposableObject from "../interface/DisposableObject.js";
+import ModelInfo from "../interface/ModelInfo.js";
 
 export default class PlayerModel {
     private readonly group = new Group();
@@ -13,18 +15,29 @@ export default class PlayerModel {
     private skinTexture: Texture | undefined;
     private readonly skinMaterial: Material;
     private readonly transparentSkinMaterial: Material;
+    private readonly models: ModelInfo[] = [];
+    private cape: ModelInfo | null = null;
+    private onSkinLoad: (() => void) | null = null;
+
+    private disposableObjects: DisposableObject[] = [];
 
     public constructor(private readonly renderer: MantleRenderer, options: PlayerModelOptions) {
         this.skinMaterial = new MeshStandardMaterial({
             side: FrontSide
         });
+        this.disposableObjects.push(this.skinMaterial);
         this.transparentSkinMaterial = new MeshStandardMaterial({
             side: DoubleSide,
             transparent: true,
             alphaTest: 1e-5
         });
+        this.disposableObjects.push(this.transparentSkinMaterial);
 
-        this.setSkin(options.skin);
+        this.onSkinLoad = options.onSkinLoad || null;
+        this.setSkin(options.skin)
+        .then(() => {
+            if (this.onSkinLoad) this.onSkinLoad();
+        });
 
 
         // body & jacket
@@ -69,24 +82,6 @@ export default class PlayerModel {
         ));
 
         
-        // left arm & sleeve
-        this.modelParts.set("armLeft", new ModelPart(
-            new BoxGeometry(1, 1, 1),
-            this.skinMaterial,
-            {
-                part: body,
-                yAttachment: 4
-            }
-        ));
-        this.modelParts.set("sleeveLeft", new ModelPart(
-            new BoxGeometry(1, 1, 1),
-            this.transparentSkinMaterial,
-            {
-                part: this.getBodyPart("armLeft")!
-            }
-        ));
-        
-
         // right arm & sleeve
         this.modelParts.set("armRight", new ModelPart(
             new BoxGeometry(1, 1, 1),
@@ -103,12 +98,30 @@ export default class PlayerModel {
                 part: this.getBodyPart("armRight")!
             }
         ));
+        
+
+        // left arm & sleeve
+        this.modelParts.set("armLeft", new ModelPart(
+            new BoxGeometry(1, 1, 1),
+            this.skinMaterial,
+            {
+                part: body,
+                yAttachment: 4
+            }
+        ));
+        this.modelParts.set("sleeveLeft", new ModelPart(
+            new BoxGeometry(1, 1, 1),
+            this.transparentSkinMaterial,
+            {
+                part: this.getBodyPart("armLeft")!
+            }
+        ));
 
 
-        // left leg & trouser
+        // right leg & trouser
         const legLeftGeometry = new BoxGeometry(4, 12, 4);
         setUvs(legLeftGeometry, getBoxUVs(16, 48, 4, 12, 4, 64, 64));
-        this.modelParts.set("legLeft", new ModelPart(
+        this.modelParts.set("legRight", new ModelPart(
             legLeftGeometry,
             this.skinMaterial,
             {
@@ -120,19 +133,19 @@ export default class PlayerModel {
         ));
         const trouserLeftGeometry = new BoxGeometry(4.5, 12.5, 4.5);
         setUvs(trouserLeftGeometry, getBoxUVs(0, 48, 4, 12, 4, 64, 64));
-        this.modelParts.set("trouserLeft", new ModelPart(
+        this.modelParts.set("trouserRight", new ModelPart(
             trouserLeftGeometry,
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("legLeft")!
+                part: this.getBodyPart("legRight")!
             }
         ));
 
 
-        // right leg & trouser
+        // left leg & trouser
         const legRightGeometry = new BoxGeometry(4, 12, 4);
         setUvs(legRightGeometry, getBoxUVs(0, 16, 4, 12, 4, 64, 64));
-        this.modelParts.set("legRight", new ModelPart(
+        this.modelParts.set("legLeft", new ModelPart(
             legRightGeometry,
             this.skinMaterial,
             {
@@ -144,13 +157,14 @@ export default class PlayerModel {
         ));
         const trouserRightGeometry = new BoxGeometry(4.5, 12.5, 4.5);
         setUvs(trouserRightGeometry, getBoxUVs(0, 32, 4, 12, 4, 64, 64));
-        this.modelParts.set("trouserRight", new ModelPart(
+        this.modelParts.set("trouserLeft", new ModelPart(
             trouserRightGeometry,
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("legRight")!
+                part: this.getBodyPart("legLeft")!
             }
         ));
+
 
 
 
@@ -162,7 +176,6 @@ export default class PlayerModel {
 
         this.renderer.addEventListener("prerender", () => {
             const time = this.renderer.getRenderTime();
-            // this.getBodyPart("body")!.pivot.rotation.y = time / 2_000;
 
             this.getBodyPart("armLeft")!.pivot.rotation.x = Math.sin(time / 150);
             this.getBodyPart("armRight")!.pivot.rotation.x = -Math.sin(time / 150);
@@ -183,103 +196,136 @@ export default class PlayerModel {
     public setSlim(slim: boolean) {
         const armWidth = slim ? 3 : 4;
 
-        const armLeft = this.modelParts.get("armLeft")!;
-        armLeft.mesh.scale.set(armWidth, 12, 4);
-        setUvs(armLeft.geometry, getBoxUVs(32, 48, armWidth, 12, 4, 64, 64));
-        armLeft.pivot.position.setX(slim ? 5.5 : 6);
-
-        const sleeveLeft = this.modelParts.get("sleeveLeft")!;
-        sleeveLeft.mesh.scale.set((armWidth + 0.5) / armWidth, 12.5 / 12, 5 / 4);
-        setUvs(sleeveLeft.geometry, getBoxUVs(48, 48, armWidth, 12, 4, 64, 64));
-
-
         const armRight = this.modelParts.get("armRight")!;
         armRight.mesh.scale.set(armWidth, 12, 4);
         setUvs(armRight.geometry, getBoxUVs(40, 16, armWidth, 12, 4, 64, 64));
-        armRight.pivot.position.setX(slim ? -5.5 : -6);
+        armRight.pivot.position.setX(slim ? 5.5 : 6);
 
         const sleeveRight = this.modelParts.get("sleeveRight")!;
         sleeveRight.mesh.scale.set((armWidth + 0.5) / armWidth, 12.5 / 12, 5 / 4);
         setUvs(sleeveRight.geometry, getBoxUVs(40, 32, armWidth, 12, 4, 64, 64));
+
+
+        const armLeft = this.modelParts.get("armLeft")!;
+        armLeft.mesh.scale.set(armWidth, 12, 4);
+        setUvs(armLeft.geometry, getBoxUVs(32, 48, armWidth, 12, 4, 64, 64));
+        armLeft.pivot.position.setX(slim ? -5.5 : -6);
+
+        const sleeveLeft = this.modelParts.get("sleeveLeft")!;
+        sleeveLeft.mesh.scale.set((armWidth + 0.5) / armWidth, 12.5 / 12, 5 / 4);
+        setUvs(sleeveLeft.geometry, getBoxUVs(48, 48, armWidth, 12, 4, 64, 64));
     }
 
-    public setSkin(skin: string) {
+    public async setSkin(skin: string) {
         if (this.skinTexture) {
+            const index = this.disposableObjects.indexOf(this.skinTexture);
+            if (index >= 0) this.disposableObjects.splice(index, 1);
+
             this.skinTexture.dispose();
         }
 
-        this.skinTexture = new TextureLoader().load(stringToSkinUrl(skin));
+        this.skinTexture = await new TextureLoader().loadAsync(stringToSkinUrl(skin));
         this.skinTexture.magFilter = NearestFilter;
         this.skinTexture.minFilter = LinearFilter;
         this.skinTexture.colorSpace = SRGBColorSpace;
+        this.disposableObjects.push(this.skinTexture);
 
         updateMaterialTexture(this.skinMaterial, this.skinTexture, false);
-        updateMaterialTexture(this.transparentSkinMaterial, this.skinTexture, false);        
+        updateMaterialTexture(this.transparentSkinMaterial, this.skinTexture, false);
     }
 
-    public addModel(model: GenericModel) {
-        const group = new Group();
+    public async addModel(model: GenericModel) {
+        if (!model.attachTo) throw "Model doesn't have an attachment specified";
+        const { modelInfo, mesh } = await buildModel(model);
+        mesh.scale.set(1.001, 1.001, 1.001);
+        model.attachTo.pivot.add(mesh);
+        this.disposableObjects.push(...modelInfo.materials, ...modelInfo.textures);
 
-        const textures: {
-            [key: string]: {
-                name: string,
-                url: string,
-                width: number,
-                height: number,
-                material: Material
-            }
-        } = {};
+        this.models.push(modelInfo);
+        return modelInfo;
+    }
 
-        const textureLoader = new TextureLoader();
-        const faceOrder: GenericModelFace[] = ["top", "bottom", "left", "right", "back", "front"]; // todo: order this to properly support multiple textures
+    public removeModel(model: ModelInfo) {
+        const index = this.models.indexOf(model);
+        if (index < 0) throw "Model is not loaded to this player";
+        this.models.splice(index, 1);
 
-        for (let textureData of model.textures) {
-            const texture = textureLoader.load(textureData.url);
-            texture.magFilter = NearestFilter;
-            texture.minFilter = LinearFilter;
+        const disposables = [...model.materials, ...model.textures];
+        for (let object of disposables) {
+            const index = this.disposableObjects.indexOf(object);
+            if (index >= 0) this.disposableObjects.splice(index, 1);
+            object.dispose();
+        }
+        model.mesh.parent?.remove(model.mesh);
+        disposeOfGroup(model.mesh);
+    }
 
-            textures[textureData.name] = {
-                ...textureData,
-                material: new MeshStandardMaterial({
-                    map: texture,
-                    side: FrontSide,
-                    transparent: true
-                })
-            }
+    public dispose() {
+        while (this.models.length) {
+            const model = this.models[0];
+            this.removeModel(model);
+            this.models.shift();
         }
 
-        for (let element of model.elements) {
-            const geometry = new BoxGeometry(...element.size);
-            const uvs: Map<GenericModelFace, Vector2[]> = new Map();
-
-            for (let i = 0; i < 6; i++) {
-                const uv = element.uv[faceOrder[i]];
-                const materialIndex = Object.keys(textures).indexOf(uv.texture);
-                const textureInfo = textures[uv.texture];
-                geometry.groups[i].materialIndex = materialIndex;
-                const vertices = getFaceVertices(uv.uv[0], uv.uv[1], uv.uv[2], uv.uv[3], textureInfo.width, textureInfo.height);
-                uvs.set(faceOrder[i], vertices);
-            }
-            
-            setUvs(geometry, orderUvs(uvs.get("top")!, uvs.get("bottom")!, uvs.get("left")!, uvs.get("right")!, uvs.get("front")!, uvs.get("back")!));
-
-            const part = new ModelPart(
-                geometry,
-                Object.values(textures).map(info => info.material)
-            );
-            part.pivot.position.set(...element.origin);
-            part.mesh.position.set(
-                element.position[0] - element.origin[0],
-                element.position[1] - element.origin[1],
-                element.position[2] - element.origin[2]
-            );
-            part.pivot.rotation.set(...element.rotation);
-
-            group.add(part.pivot);
+        for (let object of this.disposableObjects) {
+            object.dispose();
         }
 
-        group.position.set(...model.offset);
-        group.scale.set(1.001, 1.001, 1.001);
-        model.attachTo.pivot.add(group);
+        for (let part of this.modelParts.values()) {
+            disposeOfGroup(part.pivot);
+        }
+    }
+
+    public getModels() {
+        return [...this.models];
+    }
+
+    public async setCape(url: string | null) {
+        if (this.cape) {
+            this.removeModel(this.cape);
+        }
+
+        if (!url) {
+            this.cape = null;
+            return;
+        }
+
+        const texture = await new TextureLoader().loadAsync(url);
+        texture.magFilter = NearestFilter;
+        texture.minFilter = LinearFilter;
+        texture.colorSpace = SRGBColorSpace;
+        this.disposableObjects.push(texture);
+
+        const material = new MeshStandardMaterial({
+            map: texture,
+            side: DoubleSide,
+            transparent: true,
+            alphaTest: 1e-5
+        });
+        this.disposableObjects.push(material);
+
+        const geometry = new BoxGeometry(10, 16, 1);
+        setUvs(geometry, getBoxUVs(0, 0, 10, 16, 1, 22, 17));
+        const model = new ModelPart(
+            geometry,
+            material,
+            {
+                part: this.getBodyPart("body")!,
+                yAttachment: 8,
+                zAttachment: -0.5,
+                yOffset: -2,
+                zOffset: 2.5
+            }
+        );
+
+        model.pivot.rotation.x = -0.5;
+        model.mesh.rotation.y = Math.PI;
+
+        this.cape = {
+            textures: [texture],
+            materials: [material],
+            mesh: model.pivot
+        }
+        this.models.push(this.cape);
     }
 }

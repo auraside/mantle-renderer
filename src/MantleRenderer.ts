@@ -9,20 +9,23 @@ import { SSAARenderPass } from "three/addons/postprocessing/SSAARenderPass.js"
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import RendererOptions from "./interface/RendererOptions.js";
 import PlayerModel from "./model/PlayerModel.js";
+import DisposableObject from "./interface/DisposableObject.js";
 
 export type EventType = "resize" | "prerender" | "postrender";
 
 export default class MantleRenderer {
+    private destroyed = false;
     private readonly renderer: WebGLRenderer;
     private readonly composer: EffectComposer | null = null;
-    private readonly scene = new Scene();
-    private readonly camera: PerspectiveCamera;
+    public readonly scene = new Scene();
+    public readonly camera: PerspectiveCamera;
     private readonly ambientLight: AmbientLight;
-    public readonly player: PlayerModel;
+    public readonly player: PlayerModel | undefined;
     private readonly controls: OrbitControls;
     private eventListeners: Map<EventType, (() => void)[]> = new Map();
     private lastRenderTime = 0;
     private renderTime = 0;
+    private disposableObjects: DisposableObject[] = [];
 
     public constructor(options: RendererOptions) {
         this.scene = new Scene();
@@ -31,10 +34,12 @@ export default class MantleRenderer {
         this.renderer = new WebGLRenderer({
             canvas: options.canvas,
             antialias: options.antialias,
-            alpha: !!options.alpha
+            alpha: !!options.alpha,
+            preserveDrawingBuffer: true
         });
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.setAnimationLoop(time => this.render(time));
+        this.disposableObjects.push(this.renderer);
         
         // camera
         this.camera = new PerspectiveCamera(options.fov ?? 70, 1, 0.1, 1000);
@@ -57,6 +62,7 @@ export default class MantleRenderer {
                 format: RGBAFormat,
                 type: FloatType
             });
+            this.disposableObjects.push(renderTarget);
 
             this.addEventListener("resize", () => {
                 const size = this.renderer.getDrawingBufferSize(new Vector2());
@@ -65,6 +71,7 @@ export default class MantleRenderer {
 
             this.composer = new EffectComposer(this.renderer, renderTarget);
             this.composer.setPixelRatio(this.renderer.getPixelRatio());
+            this.disposableObjects.push(this.composer);
 
             if (options.ssaa) {
                 const ssaaPass = new SSAARenderPass(this.scene, this.camera, 0x000000, 0);
@@ -75,9 +82,11 @@ export default class MantleRenderer {
                 ssaaPass.unbiased = true;
                 ssaaPass.sampleLevel = 4;
                 this.composer.addPass(ssaaPass);
+                this.disposableObjects.push(ssaaPass);
             } else {
                 const renderPass = new RenderPass(this.scene, this.camera);
                 this.composer.addPass(renderPass);
+                this.disposableObjects.push(renderPass);
             }
 
             
@@ -90,6 +99,7 @@ export default class MantleRenderer {
             
             const gammaPass = new ShaderPass(GammaCorrectionShader); // gamma correction should be last/2nd-to-last before fxaa
             this.composer.addPass(gammaPass);
+            this.disposableObjects.push(gammaPass);
 
             if (options.fxaa) {
                 const fxaaPass = new ShaderPass(FXAAShader);
@@ -99,30 +109,38 @@ export default class MantleRenderer {
                 }
                 fxaaResize();
                 this.composer.addPass(fxaaPass);
+                this.disposableObjects.push(fxaaPass);
                 this.addEventListener("resize", fxaaResize);
             }
         }
 
         this.controls = new OrbitControls(this.camera, options.canvas);
+        this.disposableObjects.push(this.controls);
 
         // ambient light
         this.ambientLight = new AmbientLight(options.ambientLight?.color ?? 0xffffff, options.ambientLight?.intensity ?? 0);
         this.scene.add(this.ambientLight);
+        this.disposableObjects.push(this.ambientLight);
 
         // player model
-        this.player = new PlayerModel(this, {
-            skin: options.skin || "mhf_steve",
-            slim: !!options.slim
-        });
-        this.scene.add(this.player.getMesh());
-        this.player.getMesh().rotation.y = 0.5;
+        if (options.player) {
+            this.player = new PlayerModel(this, {
+                skin: options.player.skin || "mhf_steve",
+                slim: !!options.player.slim,
+                onSkinLoad: options.player.onSkinLoad
+            });
+            this.scene.add(this.player.getMesh());
+            this.player.getMesh().rotation.y = 0.5;
+            this.disposableObjects.push(this.player);
 
-        this.camera.lookAt(this.player.getMesh().position);
+            this.camera.lookAt(this.player.getMesh().position);
+        }
 
         // point light (temporary)
         const light = new PointLight(0xffffff, 0.8, 1000);
         this.camera.add(light);
         light.position.set(0, 20, -10);
+        this.disposableObjects.push(light);
     }
 
     public setSize(width: number, height: number) {
@@ -169,6 +187,8 @@ export default class MantleRenderer {
     }
 
     public render(time: number) {
+        if (this.destroyed) return;
+
         this.lastRenderTime = this.renderTime;
         this.renderTime = time;
         this.callEvent("prerender");
@@ -182,5 +202,24 @@ export default class MantleRenderer {
         }
         
         this.callEvent("postrender");
+    }
+
+    public destroy(clearCanvas?: boolean) {
+        this.destroyed = true;
+        if (this.player) {
+            this.scene.remove(this.player.getMesh());
+        }
+        if (clearCanvas) {
+            this.renderer.clear();
+        }
+
+        
+        for (let object of this.disposableObjects) {
+            object.dispose();
+        }
+    }
+
+    public getCanvas() {
+        return this.renderer.domElement;
     }
 }

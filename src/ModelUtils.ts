@@ -1,7 +1,9 @@
-import { BufferAttribute, BufferGeometry, Material, Texture, TextureLoader, Vector2 } from "three";
-import GenericModel, { Coordinate, GenericModelElement, GenericModelElementUvs, GenericModelFaceUv, GenericModelTexture } from "./interface/GenericModel.js"
+import { BoxGeometry, BufferAttribute, BufferGeometry, DoubleSide, Group, LinearFilter, Material, Mesh, MeshStandardMaterial, NearestFilter, Texture, TextureLoader, Vector2, Vector3 } from "three";
+import GenericModel, { Coordinate, GenericModelElement, GenericModelFace, GenericModelFaceUv, GenericModelTexture } from "./interface/GenericModel.js"
 import { average, degreesToRadians } from "./Utils.js";
 import ModelPart from "./model/ModelPart.js";
+import ModelInfo from "./interface/ModelInfo.js";
+import BoundingBox from "./interface/BoundingBox.js";
 
 export function getFaceVertices(x1: number, y1: number, x2: number, y2: number, textureWidth: number, textureHeight: number) {
     return [
@@ -65,7 +67,7 @@ export function updateMaterialTexture(material: Material, texture: Texture, disp
     material.needsUpdate = true;
 }
 
-export function parseJavaBlockModel(json: any, textureUrl: string, attachTo: ModelPart, offset: Coordinate) {
+export function parseJavaBlockModel(json: any, textureUrl: string, offset?: Coordinate, attachTo?: ModelPart) {
     const texture: GenericModelTexture = {
         name: Object.keys(json.textures)[0],
         url: textureUrl,
@@ -135,4 +137,113 @@ export function parseJavaBlockModel(json: any, textureUrl: string, attachTo: Mod
     }
 
     return model;
+}
+
+
+// Disposes of geometry, meshes & groups. Materials & textures still need to be manually disposed of.
+export function disposeOfGroup(object: Mesh | Group) {
+    object.traverse(child => {
+        if (child instanceof Mesh) {
+            const geometry: BufferGeometry = child.geometry;
+            if (geometry) {
+                geometry.dispose();
+            }
+        }
+    });
+}
+
+
+export async function buildModel(model: GenericModel) {
+    const group = new Group();
+
+    const outModel: ModelInfo = {
+        textures: Array(model.textures.length),
+        materials: Array(model.textures.length),
+        mesh: group
+    }
+
+    const textures: {
+        [key: string]: {
+            name: string,
+            url: string,
+            width: number,
+            height: number,
+            material: Material
+        }
+    } = {};
+
+    const textureLoader = new TextureLoader();
+    const faceOrder: GenericModelFace[] = ["top", "bottom", "left", "right", "back", "front"]; // todo: order this to properly support multiple textures
+
+    const promises: Promise<void>[] = [];
+
+    for (let i = 0; i < model.textures.length; i++) {
+        const textureData = model.textures[i];
+
+        const promise = new Promise<void>(async resolve => {
+            const texture = await textureLoader.loadAsync(textureData.url);
+            texture.magFilter = NearestFilter;
+            texture.minFilter = LinearFilter;
+            outModel.textures[i] = texture;
+    
+            const material = new MeshStandardMaterial({
+                map: texture,
+                side: DoubleSide,
+                transparent: true
+            });
+            outModel.materials[i] = material;
+    
+            textures[textureData.name] = {
+                ...textureData,
+                material
+            };
+
+            resolve();
+        });
+        promises.push(promise);
+    }
+
+    await Promise.allSettled(promises);
+
+    for (let element of model.elements) {
+        const geometry = new BoxGeometry(...element.size);
+        const uvs: Map<GenericModelFace, Vector2[]> = new Map();
+
+        for (let i = 0; i < 6; i++) {
+            const uv = element.uv[faceOrder[i]];
+            const materialIndex = Object.keys(textures).indexOf(uv.texture);
+            const textureInfo = textures[uv.texture];
+            geometry.groups[i].materialIndex = materialIndex;
+            const vertices = getFaceVertices(uv.uv[0], uv.uv[1], uv.uv[2], uv.uv[3], textureInfo.width, textureInfo.height);
+            uvs.set(faceOrder[i], vertices);
+        }
+        
+        setUvs(geometry, orderUvs(uvs.get("top")!, uvs.get("bottom")!, uvs.get("left")!, uvs.get("right")!, uvs.get("front")!, uvs.get("back")!));
+
+        const part = new ModelPart(
+            geometry,
+            Object.values(textures).map(info => info.material)
+        );
+        part.pivot.position.set(...element.origin);
+        part.mesh.position.set(
+            element.position[0] - element.origin[0],
+            element.position[1] - element.origin[1],
+            element.position[2] - element.origin[2]
+        );
+        part.pivot.rotation.set(...element.rotation);
+
+        group.add(part.pivot);
+    }
+
+    if (model.offset) {
+        group.position.set(...model.offset);
+    }
+
+    const container = new Group();
+    container.add(group);
+
+    return {
+        modelInfo: outModel,
+        mesh: container
+    }
 }
