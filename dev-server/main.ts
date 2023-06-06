@@ -2,7 +2,7 @@ import * as FS from "fs";
 import * as Path from "path";
 import MantleRenderer from "../src/Index.js";
 
-const imagePath = Path.join("ssr", "test.png");
+const imagePath = Path.join("dev-server", "test.png");
 try {
     FS.unlinkSync(imagePath);
 } catch {}

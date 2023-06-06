@@ -8,14 +8,12 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "npm --prefix test run dev",
-    "dev:flush": "npx rimraf node_modules/.vite && npm run dev",
-    "watch": "npx tsc -w",
+    "dev:client": "npm --prefix dev-client run dev",
+    "dev:server": "npx ts-node ./dev-server/main.ts",
     "rimraf": "./node_modules/rimraf/bin.js",
     "clean": "npx rimraf dist/",
     "build": "npm run clean && npx tsc",
-    "i": "npm install && npm --prefix test install",
-    "ssr": "npx ts-node ./ssr/main.ts"
+    "i": "npm install && npm --prefix test install"
   },
   "keywords": [],
   "author": "eyezah",
@@ -23,6 +21,7 @@
   "devDependencies": {
     "@types/gl": "^6.0.2",
     "@types/three": "^0.152.0",
+    "pidusage": "^3.0.2",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"
