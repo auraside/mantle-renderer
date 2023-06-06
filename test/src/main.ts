@@ -1,6 +1,6 @@
 import './style.css'
 
-import Renderer, { buildModel, forceCenterMesh, parseJavaBlockModel } from "../../src";
+import Renderer, { buildModel, parseJavaBlockModel } from "../../src";
 import ModelInfo from '../../src/interface/ModelInfo';
 
 const canvas = document.createElement("canvas");
@@ -14,7 +14,7 @@ function loadModel(renderer: Renderer, id: string, bodyPart: string): Promise<Mo
         if (!renderer.player) return reject("Player isn't in scene");
         fetch(`https://dev-assets.mantle.gg/model/${id}.json`).then(r => r.json()).then(r => {
             if (!renderer.player) throw "Player isn't in scene";
-            const model = parseJavaBlockModel(r, `https://dev-assets.mantle.gg/model/${id}.png`, renderer.player.getBodyPart(bodyPart)!, [-8, 8, -8]);
+            const model = parseJavaBlockModel(r, `https://dev-assets.mantle.gg/model/${id}.png`, [-8, 8, -8], renderer.player.getBodyPart(bodyPart)!);
             const outModel = renderer.player.addModel(model);
             resolve(outModel);
         });
@@ -37,7 +37,7 @@ const renderer = new Renderer({
     alpha: true
 });
 
-// loadModel(renderer, "scythe", "armLeft");
+loadModel(renderer, "scythe", "body");
 
 
 function resize() {
@@ -65,21 +65,21 @@ document.querySelector("#glass-cape")?.addEventListener("click", () => renderer.
 
 
 
-const start = Date.now();
-fetch("https://dev-assets.mantle.gg/model/dimmadome.json").then(r => r.json()).then(async r => {
-    const model = parseJavaBlockModel(r, "https://dev-assets.mantle.gg/model/dimmadome.png");
-    const builtModel = await buildModel(model);
+// const start = Date.now();
+// fetch("https://dev-assets.mantle.gg/model/dimmadome.json").then(r => r.json()).then(async r => {
+//     const model = parseJavaBlockModel(r, "https://dev-assets.mantle.gg/model/dimmadome.png", [-8, 0, -8]);
+//     const {mesh} = await buildModel(model);
+//     renderer.scene.add(mesh);
 
-    const mesh = forceCenterMesh(builtModel.mesh);
-    renderer.scene.add(mesh);
+//     setInterval(() => {
+//         mesh.rotateY(0.01);
+//     }, 10);
 
-    const render = () => {
-        console.log(renderer.getCanvas().toDataURL("image/jpeg"));
-        renderer.removeEventListener("postrender", render);
-        console.log("rendered! took", (Date.now() - start), "ms");
-    }
+//     const render = () => {
+//         console.log(renderer.getCanvas().toDataURL("image/jpeg"));
+//         renderer.removeEventListener("postrender", render);
+//         console.log("rendered! took", (Date.now() - start), "ms");
+//     }
 
-    renderer.addEventListener("postrender", render);
-
-    
-});
+//     renderer.addEventListener("postrender", render);
+// });

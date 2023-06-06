@@ -67,7 +67,7 @@ export function updateMaterialTexture(material: Material, texture: Texture, disp
     material.needsUpdate = true;
 }
 
-export function parseJavaBlockModel(json: any, textureUrl: string, attachTo?: ModelPart, offset?: Coordinate) {
+export function parseJavaBlockModel(json: any, textureUrl: string, offset?: Coordinate, attachTo?: ModelPart) {
     const texture: GenericModelTexture = {
         name: Object.keys(json.textures)[0],
         url: textureUrl,
@@ -239,46 +239,11 @@ export async function buildModel(model: GenericModel) {
         group.position.set(...model.offset);
     }
 
+    const container = new Group();
+    container.add(group);
+
     return {
         modelInfo: outModel,
-        mesh: group
+        mesh: container
     }
-}
-
-
-export function getModelCenter(mesh: Group | Mesh){
-    let unset = true;
-    const coords: [Vector3, Vector3] = [new Vector3(), new Vector3];
-
-    mesh.traverse(child => {
-        if (child instanceof Mesh) {
-            const geometry: BufferGeometry = child.geometry;
-            if (geometry) {
-                geometry.computeBoundingBox();
-                const box = geometry.boundingBox!;
-                if (unset) {
-                    unset = false;
-                    coords[0] = box.min;
-                    coords[1] = box.max;
-                } else {
-                    coords[0] = coords[0].min(box.min);
-                    coords[1] = coords[1].max(box.max);
-                }
-            }
-        }
-    });
-
-    return coords;
-}
-
-
-export function forceCenterMesh(mesh: Group | Mesh) {
-    const group = new Group();
-    group.add(mesh);
-
-    const bounds = getModelCenter(mesh);
-    const offset = bounds[1].sub(bounds[0]).divide(new Vector3(-2, -2, -2));
-    mesh.position.set(offset.x, offset.y, offset.z);
-
-    return group;
 }
