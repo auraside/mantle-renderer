@@ -65,24 +65,3 @@ document.querySelector("#remove-models")?.addEventListener("click", () => {
 document.querySelector("#chad-cape")?.addEventListener("click", () => renderer.player?.setCape("https://dev-assets.mantle.gg/cape/chad.png"));
 document.querySelector("#glass-cape")?.addEventListener("click", () => renderer.player?.setCape("https://dev-assets.mantle.gg/cape/glass.png"));
 document.querySelector("#screenshot")?.addEventListener("click", () => console.log(renderer.screenshot(1000, 1000, "png", 5)));
-
-
-
-// const start = Date.now();
-// fetch("https://dev-assets.mantle.gg/model/dimmadome.json").then(r => r.json()).then(async r => {
-//     const model = parseJavaBlockModel(r, "https://dev-assets.mantle.gg/model/dimmadome.png", [-8, 0, -8]);
-//     const {mesh} = await buildModel(model);
-//     renderer.scene.add(mesh);
-
-//     setInterval(() => {
-//         mesh.rotateY(0.01);
-//     }, 10);
-
-//     const render = () => {
-//         console.log(renderer.getCanvas().toDataURL("image/jpeg"));
-//         renderer.removeEventListener("postrender", render);
-//         console.log("rendered! took", (Date.now() - start), "ms");
-//     }
-
-//     renderer.addEventListener("postrender", render);
-// });

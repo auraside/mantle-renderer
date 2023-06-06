@@ -324,7 +324,6 @@ export default class MantleRenderer {
             var base64 = canvas2d.toDataURL(("image/" + mimeType) as any);
         }
 
-        console.log("screenshot took " + (Date.now() - start) + "ms");
         return base64;
     }
 }

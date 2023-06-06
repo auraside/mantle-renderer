@@ -226,7 +226,7 @@ export default class PlayerModel {
         this.skinTexture = await platformUtils().createTexture(skin);
         this.skinTexture.magFilter = NearestFilter;
         this.skinTexture.minFilter = LinearFilter;
-        this.skinTexture.colorSpace = SRGBColorSpace;
+        // this.skinTexture.colorSpace = SRGBColorSpace; // todo: figure out why this complains
         this.disposableObjects.push(this.skinTexture);
 
         updateMaterialTexture(this.skinMaterial, this.skinTexture, false);
