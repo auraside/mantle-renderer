@@ -17,8 +17,8 @@
     "test:memory": "npx ts-node ./tests/memoryLeak/MemoryLeak.ts"
   },
   "keywords": [],
-  "author": "eyezah",
-  "license": "ARR",
+  "author": "eyezah, AuraSide",
+  "license": "MIT",
   "devDependencies": {
     "@types/gl": "^6.0.2",
     "@types/pidusage": "^2.0.2",
