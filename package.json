@@ -1,6 +1,6 @@
 {
   "name": "mantle-renderer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Minecraft-focused WebGL powered 3D renderer built for both the browser and server.",
   "main": "dist/index.js",
   "browser": {
@@ -19,7 +19,12 @@
     "dev:server": "npx ts-node ./dev-server/main.ts",
     "test:memory": "npx ts-node ./tests/memoryLeak/MemoryLeak.ts"
   },
-  "keywords": ["Minecraft", "3d", "Renderer", "Three"],
+  "keywords": [
+    "Minecraft",
+    "3d",
+    "Renderer",
+    "Three"
+  ],
   "author": "eyezah, AuraSide",
   "license": "MIT",
   "devDependencies": {
