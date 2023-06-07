@@ -1,10 +1,10 @@
 # <img src="./assets/Mantle%20Icon.svg" height=40 /> Mantle Renderer
-A WebGL powered 3D renderer built for both the browser and server.
+A Minecraft-focused WebGL powered 3D renderer built for both the browser and server.
 
 ## Usage
 
 ### Creation
-New renderers can be created attached to canvases. If used server-side, the `canvas` field should be ommited to let the renderer take care of it.
+New renderers can be created attached to canvases. If used server-side, the `canvas` field should be omitted to let the renderer take care of it.
 ```ts
 const renderer = new MantleRenderer({
     live: true,

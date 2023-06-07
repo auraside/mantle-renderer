@@ -1,0 +1,11 @@
+assets/
+dev-client/
+dev-server/
+src/
+tests/
+.github/
+node_modules/
+
+*.tgz
+tsconfig.json
+.gitattributes

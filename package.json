@@ -1,7 +1,7 @@
 {
-  "name": "mantle-renderer-v2",
+  "name": "mantle-renderer",
   "version": "0.1.0",
-  "description": "",
+  "description": "A Minecraft-focused WebGL powered 3D renderer built for both the browser and server.",
   "main": "dist/index.js",
   "browser": {
     "./src/platformSpecifics/ServerPlatformUtils.js": "./src/platformSpecifics/ClientPlatformUtils.js"
@@ -12,16 +12,18 @@
     "clean": "npx rimraf dist/",
     "build": "npm run clean && npx tsc",
     "i": "npm install && npm --prefix test install",
+    "check": "npx tsc --noEmit",
+    "package": "npm run build && npm publish",
+    "pack": "npm run build && npm pack",
     "dev:client": "npm --prefix dev-client run dev",
     "dev:server": "npx ts-node ./dev-server/main.ts",
     "test:memory": "npx ts-node ./tests/memoryLeak/MemoryLeak.ts"
   },
-  "keywords": [],
+  "keywords": ["Minecraft", "3d", "Renderer", "Three"],
   "author": "eyezah, AuraSide",
   "license": "MIT",
   "devDependencies": {
     "@types/gl": "^6.0.2",
-    "@types/pidusage": "^2.0.2",
     "@types/three": "^0.152.0",
     "chalk": "^5.2.0",
     "rimraf": "^5.0.1",
