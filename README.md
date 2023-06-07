@@ -1,5 +1,9 @@
-# <img src="./assets/Mantle%20Icon.svg" height=40 /> Mantle Renderer
+# <img src="https://github.com/auraside/mantle-renderer/raw/main/assets/Mantle%20Icon.svg" height=40 /> Mantle Renderer
 A Minecraft-focused WebGL powered 3D renderer built for both the browser and server.
+
+## Installation
+Install Mantle Renderer into your client or server-side project using `npm i mantle-renderer`.
+
 
 ## Usage
 
@@ -68,4 +72,4 @@ await renderer.player.addModel(model);
 run `npm run i` instead of `npm install` in order to download dependencies for both the library and the dev environment
 
 ## License
-This project is [MIT licensed](./LICENSE).
+This project is [MIT licensed](https://github.com/auraside/mantle-renderer/blob/main/LICENSE).
