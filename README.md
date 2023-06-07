@@ -69,7 +69,7 @@ await renderer.player.addModel(model);
 
 ## Development Setup
 
-run `npm run i` instead of `npm install` in order to download dependencies for both the library and the dev environment
+run `npm run i` instead of `npm install` in order to download dependencies for both the library and the development environment.
 
 ## License
 This project is [MIT licensed](https://github.com/auraside/mantle-renderer/blob/main/LICENSE).
