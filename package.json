@@ -1,6 +1,6 @@
 {
   "name": "mantle-renderer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Minecraft-focused WebGL powered 3D renderer built for both the browser and server.",
   "main": "dist/index.js",
   "browser": {
@@ -17,7 +17,8 @@
     "pack": "npm run build && npm pack",
     "dev:client": "npm --prefix dev-client run dev",
     "dev:server": "npx ts-node ./dev-server/main.ts",
-    "test:memory": "npx ts-node ./tests/memoryLeak/MemoryLeak.ts"
+    "test:memory": "npx ts-node ./tests/memoryLeak/MemoryLeak.ts",
+    "test:xvfb": "xvfb-run -s \"-ac -screen 0 1280x1024x24\" npm run dev:server"
   },
   "keywords": [
     "Minecraft",

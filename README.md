@@ -66,6 +66,18 @@ await renderer.player.addModel(model);
 ```
 
 
+## Using Headlessly
+When using Mantle Renderer in a server environment you're likely using a headless machine. In this case, creating a render may result in the following error:
+> THREE.WebGLRenderer: Error creating WebGL context.
+
+This is because the machine isn't providing an X11 or an OpenGL environment. To setup this environment on Linux we can use [Xvfb](https://en.wikipedia.org/wiki/Xvfb) or [Mesa](https://docs.mesa3d.org).
+
+If using Xvfb, its best to create the display environment as you start the Node.js application and close the environment when the application finishes. We can do that using this command:
+```
+xvfb-run -s "-ac -screen 0 1280x1024x24" <command to start Node.js application>
+```
+Read more about this in the [Headless GL documentation](https://github.com/stackgl/headless-gl#how-can-headless-gl-be-used-on-a-headless-linux-machine).
+
 
 ## Development Setup
 
