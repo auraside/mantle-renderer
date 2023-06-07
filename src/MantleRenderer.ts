@@ -252,8 +252,6 @@ export default class MantleRenderer {
 
     // Anti-Aliasing is patchy client-side, uasge of this is only encouraged for server-side rendering. Client side applications can just .toDataURL() the canvas.
     public screenshot(width: number, height: number, mimeType: "png" | "jpeg", superSampling?: number) {
-        const start = Date.now();
-
         superSampling = Math.max(Math.round(superSampling || 1), 1);
 
         width *= superSampling;
