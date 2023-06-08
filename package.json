@@ -1,12 +1,12 @@
 {
   "name": "mantle-renderer",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "A Minecraft-focused WebGL powered 3D renderer built for both the browser and server.",
   "main": "dist/index.js",
+  "type": "module",
   "browser": {
     "./src/platformSpecifics/ServerPlatformUtils.js": "./src/platformSpecifics/ClientPlatformUtils.js"
   },
-  "type": "module",
   "scripts": {
     "rimraf": "./node_modules/rimraf/bin.js",
     "clean": "npx rimraf dist/",
