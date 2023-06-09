@@ -1,8 +1,8 @@
 {
   "name": "mantle-renderer",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A Minecraft-focused WebGL powered 3D renderer built for both the browser and server.",
-  "main": "dist/index.js",
+  "main": "dist/Index.js",
   "type": "module",
   "browser": {
     "./src/platformSpecifics/ServerPlatformUtils.js": "./src/platformSpecifics/ClientPlatformUtils.js"
