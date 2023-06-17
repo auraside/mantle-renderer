@@ -1,4 +1,4 @@
-import { BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, DoubleSide, Group, LinearFilter, Material, Mesh, MeshStandardMaterial, NearestFilter, SRGBColorSpace, Texture, Vector2 } from "three";
+import { BoxGeometry, BufferAttribute, BufferGeometry, DoubleSide, Group, Material, Mesh, MeshStandardMaterial, NearestFilter, SRGBColorSpace, Texture, Vector2 } from "three";
 import GenericModel, { Coordinate, GenericModelElement, GenericModelFace, GenericModelFaceUv, GenericModelTexture } from "./interface/GenericModel.js"
 import { average, degreesToRadians, platformUtils } from "./Utils.js";
 import ModelPart from "./model/ModelPart.js";
@@ -181,7 +181,7 @@ export async function buildModel(model: GenericModel, srgb?: boolean) {
         const promise = new Promise<void>(async resolve => {
             const texture = await platformUtils().createTexture(textureData.url);
             texture.magFilter = NearestFilter;
-            texture.minFilter = LinearFilter;
+            texture.minFilter = NearestFilter;
             if (srgb) {
                 texture.colorSpace = SRGBColorSpace;
             }

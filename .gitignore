@@ -1,3 +1,4 @@
 node_modules/
 dist/
 *.tgz
+dev-server/test.png

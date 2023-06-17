@@ -1,6 +1,6 @@
 import './style.css'
 
-import Renderer, { parseJavaBlockModel } from "../../src";
+import Renderer, { parseJavaBlockModel } from "../../src/Index";
 import ModelInfo from '../../src/interface/ModelInfo';
 import { BoxGeometry, DirectionalLight, Mesh, ShadowMaterial } from 'three';
 
@@ -96,8 +96,8 @@ pointLight.shadow.camera.right = 300;
 pointLight.shadow.camera.top = 500;
 pointLight.shadow.camera.bottom = -100;
 pointLight.shadow.bias = -0.005;
-pointLight.shadow.mapSize.width = 2048 * 8;
-pointLight.shadow.mapSize.height = 2048 * 8;
+pointLight.shadow.mapSize.width = 512;
+pointLight.shadow.mapSize.height = 512;
 pointLight.shadow.radius = 100;
 pointLight.shadow.blurSamples = 25;
 
