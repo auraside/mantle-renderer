@@ -1,6 +1,6 @@
 {
   "name": "mantle-renderer",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A Minecraft-focused WebGL powered 3D renderer built for both the browser and server.",
   "main": "dist/Index.js",
   "type": "module",
