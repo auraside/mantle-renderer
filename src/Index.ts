@@ -14,6 +14,3 @@ export * from "./interface/PlayerModelOptions.js"
 export * from "./model/ModelPart.js"
 export * from "./model/PlayerModel.js"
 export * from "./Utils.js"
-
-export * from "./platformSpecifics/ClientPlatformUtils.js"
-export * from "./platformSpecifics/ServerPlatformUtils.js"
