@@ -1,8 +1,9 @@
 import { BoxGeometry, BufferAttribute, BufferGeometry, DoubleSide, Group, Material, Mesh, MeshStandardMaterial, NearestFilter, SRGBColorSpace, Texture, Vector2 } from "three";
 import GenericModel, { Coordinate, GenericModelElement, GenericModelFace, GenericModelFaceUv, GenericModelTexture } from "./interface/GenericModel.js"
-import { average, degreesToRadians, platformUtils } from "./Utils.js";
+import { average, degreesToRadians } from "./Utils.js";
 import ModelPart from "./model/ModelPart.js";
 import ModelInfo from "./interface/ModelInfo.js";
+import BasePlatformUtils from "./platformSpecifics/BasePlatformUtils.js";
 
 export function getFaceVertices(x1: number, y1: number, x2: number, y2: number, textureWidth: number, textureHeight: number) {
     return [
@@ -152,7 +153,7 @@ export function disposeOfGroup(object: Mesh | Group) {
 }
 
 
-export async function buildModel(model: GenericModel, srgb?: boolean) {
+export async function buildModel(model: GenericModel, platformUtils: BasePlatformUtils, srgb?: boolean) {
     const group = new Group();
 
     const outModel: ModelInfo = {
@@ -179,7 +180,7 @@ export async function buildModel(model: GenericModel, srgb?: boolean) {
         const textureData = model.textures[i];
 
         const promise = new Promise<void>(async resolve => {
-            const texture = await platformUtils().createTexture(textureData.url);
+            const texture = await platformUtils.createTexture(textureData.url);
             texture.magFilter = NearestFilter;
             texture.minFilter = NearestFilter;
             if (srgb) {

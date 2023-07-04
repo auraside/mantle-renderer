@@ -2,7 +2,6 @@ import { BoxGeometry, DoubleSide, FrontSide, Group, LinearFilter, Material, Mesh
 import ModelPart from "./ModelPart.js";
 import { buildModel, disposeOfGroup, getBoxUVs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
 import PlayerModelOptions from "../interface/PlayerModelOptions.js";
-import { platformUtils } from "../Utils.js";
 import MantleRenderer from "../MantleRenderer.js";
 import GenericModel from "../interface/GenericModel.js";
 import DisposableObject from "../interface/DisposableObject.js";
@@ -223,7 +222,7 @@ export default class PlayerModel {
             this.skinTexture.dispose();
         }
 
-        this.skinTexture = await platformUtils().createTexture(skin);
+        this.skinTexture = await this.renderer.platformUtils.createTexture(skin);
         this.skinTexture.magFilter = NearestFilter;
         this.skinTexture.minFilter = LinearFilter;
         this.skinTexture.colorSpace = SRGBColorSpace;
@@ -235,7 +234,7 @@ export default class PlayerModel {
 
     public async addModel(model: GenericModel, srgb?: boolean) {
         if (!model.attachTo) throw "Model doesn't have an attachment specified";
-        const { modelInfo, mesh } = await buildModel(model, srgb);
+        const { modelInfo, mesh } = await buildModel(model, this.renderer.platformUtils, srgb);
         mesh.scale.set(1.001, 1.001, 1.001);
         model.attachTo.pivot.add(mesh);
         this.disposableObjects.push(...modelInfo.materials, ...modelInfo.textures);
@@ -289,7 +288,7 @@ export default class PlayerModel {
             return;
         }
 
-        const texture = await platformUtils().createTexture(url);
+        const texture = await this.renderer.platformUtils.createTexture(url);
         texture.magFilter = NearestFilter;
         texture.minFilter = LinearFilter;
         texture.colorSpace = SRGBColorSpace;

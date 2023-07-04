@@ -12,6 +12,7 @@ New renderers can be created attached to canvases. If used server-side, the `can
 ```ts
 const renderer = new MantleRenderer({
     live: true,
+    platformUtils: new ClientPlatformUtils(),
     canvas: canvasElement,
     player: {
         skin: "EYE2AH",
@@ -77,6 +78,14 @@ If using Xvfb, its best to create the display environment as you start the Node.
 xvfb-run -s "-ac -screen 0 1280x1024x24" <command to start Node.js application>
 ```
 Read more about this in the [Headless GL documentation](https://github.com/stackgl/headless-gl#how-can-headless-gl-be-used-on-a-headless-linux-machine).
+
+In order to not depend on a browser, the renderer's `platformUtils` needs to be adjusted.
+```ts
+const renderer = new MantleRenderer({
+    live: false,
+    platformUtils: new ServerPlatformUtils()
+});
+```
 
 
 ## Development Setup

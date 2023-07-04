@@ -1,4 +1,4 @@
-import { Canvas3d } from "../platformSpecifics/BasePlatformUtils.js"
+import BasePlatformUtils, { Canvas3d } from "../platformSpecifics/BasePlatformUtils.js"
 import LightOptions from "./LightOptions.js"
 
 export interface RendererPlayerOptions {
@@ -15,6 +15,8 @@ export interface RendererBloomOptions {
 
 export default interface RendererOptions {
     live: boolean
+    platformUtils: BasePlatformUtils
+    
     canvas?: HTMLCanvasElement | Canvas3d
     fov?: number // field of view of camera. defaults to 70 (degrees)
     antialias?: boolean // simple antialiasing
@@ -30,4 +32,5 @@ export default interface RendererOptions {
     shadows?: boolean // expensive
 
     controls?: boolean // mouse pointer controls
+
 }

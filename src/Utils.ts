@@ -1,5 +1,3 @@
-import PlatformSpecifics from "./platformSpecifics/ServerPlatformUtils.js";
-
 export function average(...numbers: number[]) {
     let total = 0;
     for (let number of numbers) {
@@ -14,9 +12,4 @@ export function degreesToRadians(degrees: number) {
 
 export function radiansToDegrees(radians: number) {
     return radians / Math.PI * 180;
-}
-
-const platformSpecifics = new PlatformSpecifics();
-export function platformUtils() {
-    return platformSpecifics;
 }

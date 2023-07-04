@@ -3,6 +3,7 @@ import './style.css'
 import Renderer, { parseJavaBlockModel } from "../../src/Index";
 import ModelInfo from '../../src/interface/ModelInfo';
 import { BoxGeometry, DirectionalLight, Mesh, ShadowMaterial } from 'three';
+import ClientPlatformUtils from '../../src/platformSpecifics/ClientPlatformUtils';
 
 const canvas = document.createElement("canvas");
 document.querySelector("#app")!.appendChild(canvas);
@@ -33,6 +34,7 @@ function loadModel(renderer: Renderer, id: string, bodyPart: string): Promise<Mo
 
 const renderer = new Renderer({
     live: true,
+    platformUtils: new ClientPlatformUtils(),
     canvas,
     ambientLight: {
         intensity: 0

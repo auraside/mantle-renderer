@@ -11,8 +11,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import RendererOptions from "./interface/RendererOptions.js";
 import PlayerModel from "./model/PlayerModel.js";
 import DisposableObject from "./interface/DisposableObject.js";
-import { Platform } from "./platformSpecifics/BasePlatformUtils.js";
-import { platformUtils } from "./Utils.js";
+import BasePlatformUtils, { Platform } from "./platformSpecifics/BasePlatformUtils.js";
 import { Canvas } from "canvas";
 
 export type EventType = "resize" | "prerender" | "postrender";
@@ -20,6 +19,7 @@ export type EventType = "resize" | "prerender" | "postrender";
 export default class MantleRenderer {
     private destroyed = false;
     private readonly renderer: WebGLRenderer;
+    public readonly platformUtils: BasePlatformUtils;
     private readonly composer: EffectComposer | null = null;
     public readonly scene = new Scene();
     public readonly camera: PerspectiveCamera;
@@ -33,8 +33,9 @@ export default class MantleRenderer {
 
     public constructor(options: RendererOptions) {
         this.scene = new Scene();
+        this.platformUtils = options.platformUtils;
 
-        const canvas = options.canvas || platformUtils().create3dCanvas(500, 500);
+        const canvas = options.canvas || this.platformUtils.create3dCanvas(500, 500);
 
         // renderer
         this.renderer = new WebGLRenderer({
@@ -44,7 +45,7 @@ export default class MantleRenderer {
             preserveDrawingBuffer: true,
             powerPreference: "high-performance"
         });
-        this.renderer.setPixelRatio(platformUtils().getDevicePixelRatio());
+        this.renderer.setPixelRatio(this.platformUtils.getDevicePixelRatio());
         if (options.shadows) {
             this.renderer.shadowMap.enabled = true;
             this.renderer.shadowMap.type = PCFSoftShadowMap;
@@ -140,7 +141,7 @@ export default class MantleRenderer {
         }
 
         if (options.controls) {
-            if (platformUtils().getPlatform() == Platform.SERVER) {
+            if (this.platformUtils.getPlatform() == Platform.SERVER) {
                 console.warn("Controls are automatically disabled as they aren't supported server-side.");
             } else {
                 this.controls = new OrbitControls(this.camera, canvas as HTMLCanvasElement);
@@ -261,7 +262,7 @@ export default class MantleRenderer {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
 
-        const canvas = platformUtils().create3dCanvas(width, height);
+        const canvas = this.platformUtils.create3dCanvas(width, height);
         const renderer = new WebGLRenderer({
             canvas: canvas as unknown as HTMLCanvasElement,
             alpha: true,
@@ -293,7 +294,7 @@ export default class MantleRenderer {
             pixels.set(rowData, imgRow * width * 4);
         }
 
-        const canvas2d = platformUtils().create2dCanvas(width, height);
+        const canvas2d = this.platformUtils.create2dCanvas(width, height) as any;
         const ctx = canvas2d.getContext("2d");
         const imageData = ctx.createImageData(width, height);
         imageData.data.set(pixels);
@@ -313,12 +314,12 @@ export default class MantleRenderer {
             const originalWidth = width / superSampling;
             const originalHeight = height / superSampling;
 
-            const shrinkCanvas = platformUtils().create2dCanvas(originalWidth, originalHeight) as Canvas;
+            const shrinkCanvas = this.platformUtils.create2dCanvas(originalWidth, originalHeight) as Canvas;
             const ctx = shrinkCanvas.getContext("2d");
             ctx.drawImage(canvas2d, 0, 0, originalWidth, originalHeight);
             var base64 = shrinkCanvas.toDataURL(("image/" + mimeType) as any);
         } else {
-            var base64 = canvas2d.toDataURL(("image/" + mimeType) as any);
+            var base64 = canvas2d.toDataURL("image/" + mimeType) as string;
         }
 
         return base64;
