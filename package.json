@@ -1,6 +1,6 @@
 {
   "name": "mantle-renderer",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A Minecraft-focused WebGL powered 3D renderer built for both the browser and server.",
   "main": "dist/Index.js",
   "type": "module",
@@ -10,7 +10,7 @@
     "build": "npm run clean && npx tsc",
     "i": "npm install && npm --prefix dev-client install",
     "check": "npx tsc --noEmit",
-    "package": "npm run build && npm publish",
+    "push": "npm run build && npm publish",
     "pack": "npm run build && npm pack",
     "dev:client": "npm --prefix dev-client run dev",
     "dev:server": "npx ts-node ./dev-server/main.ts",

@@ -25,7 +25,7 @@ export default class MantleRenderer {
     public readonly camera: PerspectiveCamera;
     private readonly ambientLight: AmbientLight;
     public readonly player: PlayerModel | undefined;
-    private readonly controls: OrbitControls | undefined;
+    public readonly controls: OrbitControls | null;
     private eventListeners: Map<EventType, (() => void)[]> = new Map();
     private lastRenderTime = 0;
     private renderTime = 0;
@@ -143,10 +143,13 @@ export default class MantleRenderer {
         if (options.controls) {
             if (this.platformUtils.getPlatform() == Platform.SERVER) {
                 console.warn("Controls are automatically disabled as they aren't supported server-side.");
+                this.controls = null;
             } else {
                 this.controls = new OrbitControls(this.camera, canvas as HTMLCanvasElement);
                 this.disposableObjects.push(this.controls);
             }
+        } else {
+            this.controls = null;
         }
 
         // ambient light
