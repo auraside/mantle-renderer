@@ -1,5 +1,6 @@
 import { TextureLoader } from "three";
 import BasePlatformUtils, { Platform } from "./BasePlatformUtils.js";
+import { Canvas } from "canvas";
 
 export default class ClientPlatformUtils extends BasePlatformUtils {
     getPlatform() {
@@ -27,5 +28,24 @@ export default class ClientPlatformUtils extends BasePlatformUtils {
     async createTexture(url: string) {
         const texture = await new TextureLoader().loadAsync(url);
         return texture;
+    }
+    
+    urlToCanvas(url: string) {
+        return new Promise<HTMLCanvasElement>((resolve, reject) => {
+            const image = new Image();
+            image.crossOrigin = "anonymous";
+            
+            image.onerror = reject;
+            image.onload = () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = image.width;
+                canvas.height = image.height;
+                canvas.getContext("2d")!.drawImage(image, 0, 0, image.width, image.height);
+                
+                resolve(canvas);
+            }
+
+            image.src = url;
+        });
     }
 }

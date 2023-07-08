@@ -30,8 +30,13 @@ export default class ServerPlatformUtils extends BasePlatformUtils {
         return 1;
     }
 
-    createTexture(url: string) {
-        return new Promise<Texture>((resolve, reject) => {
+    async createTexture(url: string) {
+        const canvas = await this.urlToCanvas(url);
+        return new CanvasTexture(canvas as any);
+    }
+
+    urlToCanvas(url: string) {
+        return new Promise<Canvas.Canvas>((resolve, reject) => {
             const image = new Canvas.Image();
             
             image.onerror = reject;
@@ -39,8 +44,7 @@ export default class ServerPlatformUtils extends BasePlatformUtils {
                 const canvas = Canvas.createCanvas(image.width, image.height);
                 canvas.getContext("2d").drawImage(image, 0, 0, image.width, image.height);
                 
-                const texture = new CanvasTexture(canvas as unknown as HTMLCanvasElement);
-                resolve(texture);
+                resolve(canvas);
             }
 
             image.src = url;

@@ -1,4 +1,5 @@
 import { Texture } from "three"
+import { Canvas } from "canvas"
 
 export interface Canvas3d { // the bare minimum to count as a canvas
     width: number
@@ -30,4 +31,6 @@ export default abstract class BasePlatformUtils {
     abstract getDevicePixelRatio(): number
 
     abstract createTexture(url: string): Promise<Texture>
+
+    abstract urlToCanvas(url: string): Promise<Canvas | HTMLCanvasElement>
 }

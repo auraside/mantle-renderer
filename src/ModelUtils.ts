@@ -3,7 +3,8 @@ import GenericModel, { Coordinate, GenericModelElement, GenericModelFace, Generi
 import { average, degreesToRadians } from "./Utils.js";
 import ModelPart from "./model/ModelPart.js";
 import ModelInfo from "./interface/ModelInfo.js";
-import BasePlatformUtils from "./platformSpecifics/BasePlatformUtils.js";
+import BasePlatformUtils, { Canvas2d } from "./platformSpecifics/BasePlatformUtils.js";
+import { Canvas } from "canvas";
 
 export function getFaceVertices(x1: number, y1: number, x2: number, y2: number, textureWidth: number, textureHeight: number) {
     return [
@@ -249,4 +250,79 @@ export async function buildModel(model: GenericModel, platformUtils: BasePlatfor
         modelInfo: outModel,
         mesh: container
     }
+}
+
+
+export async function formatSkin(skin: string | Canvas | HTMLCanvasElement, platformUtils: BasePlatformUtils) {
+    if (typeof skin == "string") {
+        skin = await platformUtils.urlToCanvas(skin);
+    }
+    const frequently = {
+        willReadFrequently: true
+    } as any;
+
+    const inCtx = skin.getContext("2d", frequently)! as CanvasRenderingContext2D;
+
+    const screenData = inCtx.getImageData(0, 0, skin.width, skin.height);
+    for (let i = 3; i < screenData.data.length; i += 4) {
+        screenData.data[i] = 255;
+    }
+    const solidCanvas = platformUtils.create2dCanvas(skin.width, skin.height) as Canvas | HTMLCanvasElement;
+    const solidCtx = solidCanvas.getContext("2d", frequently)! as CanvasRenderingContext2D;
+    solidCtx.putImageData(screenData, 0, 0);
+
+    const canvas = platformUtils.create2dCanvas(64, 64) as Canvas | HTMLCanvasElement;
+    const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(8, 0, 16, 8); // top of head
+    ctx.fillRect(0, 8, 32, 8); // rest of head
+
+    ctx.fillRect(20, 48, 8, 4); // top of left leg
+    ctx.fillRect(36, 48, 8, 4); // top of left arm
+    ctx.fillRect(16, 52, 32, 12); // rest of left leg and left arm
+
+    ctx.fillRect(4, 16, 8, 4); // top of right leg
+    ctx.fillRect(20, 16, 16, 4); // top of body
+    ctx.fillRect(44, 16, 8, 4); // top of right arm
+    ctx.fillRect(0, 20, 56, 12); // rest of body and right arm
+
+
+    ctx.putImageData(solidCtx.getImageData(8, 0, 16, 8), 8, 0); // top and bottom of head
+    ctx.putImageData(solidCtx.getImageData(0, 8, 32, 8), 0, 8); // rest of head
+
+    ctx.putImageData(solidCtx.getImageData(4, 16, 8, 4), 4, 16); // top of right leg
+    ctx.putImageData(solidCtx.getImageData(20, 16, 16, 4), 20, 16); // top of body
+    ctx.putImageData(solidCtx.getImageData(44, 16, 8, 4), 44, 16); // top of right arm
+    ctx.putImageData(solidCtx.getImageData(0, 20, 56, 12), 0, 20); // rest of right leg, body and right arm
+
+
+    if (skin.height == 32) {
+        ctx.putImageData(solidCtx.getImageData(4, 16, 8, 4), 20, 48); // top of left leg
+        ctx.putImageData(solidCtx.getImageData(0, 20, 16, 12), 16, 52); // rest of left leg
+
+        ctx.putImageData(solidCtx.getImageData(44, 16, 8, 4), 36, 48); // top of left arm
+        ctx.putImageData(solidCtx.getImageData(40, 20, 16, 12), 32, 52); // rest of left arm
+    } else {
+        ctx.putImageData(solidCtx.getImageData(20, 48, 8, 4), 20, 48); // top of left leg
+        ctx.putImageData(solidCtx.getImageData(36, 48, 8, 4), 36, 48); // top of left arm
+        ctx.putImageData(solidCtx.getImageData(16, 52, 32, 12), 16, 52); // rest of left leg and left arm
+
+        ctx.putImageData(inCtx.getImageData(40, 0, 16, 8), 40, 0); // top and bottom of hat
+        ctx.putImageData(inCtx.getImageData(32, 8, 32, 8), 32, 8); // rest of hat
+
+        ctx.putImageData(inCtx.getImageData(4, 32, 8, 4), 4, 32); // top of right trouser
+        ctx.putImageData(inCtx.getImageData(20, 32, 16, 4), 20, 32); // top of jacket
+        ctx.putImageData(inCtx.getImageData(44, 32, 8, 4), 44, 32); // top of right sleeve
+        ctx.putImageData(inCtx.getImageData(0, 36, 56, 12), 0, 36); // rest of right trouser, jacket and right sleeve
+        
+        ctx.putImageData(inCtx.getImageData(4, 48, 8, 4), 4, 48); // top of left trouser
+        ctx.putImageData(inCtx.getImageData(0, 52, 16, 12), 0, 52); // rest of left trouser
+
+        ctx.putImageData(inCtx.getImageData(52, 48, 8, 4), 52, 48); // top of left sleeve
+        ctx.putImageData(inCtx.getImageData(48, 52, 16, 12), 48, 52); // rest of left sleeve
+    }
+
+    return canvas.toDataURL();
 }

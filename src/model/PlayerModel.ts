@@ -1,6 +1,6 @@
 import { BoxGeometry, DoubleSide, FrontSide, Group, LinearFilter, Material, MeshStandardMaterial, NearestFilter, SRGBColorSpace, Texture } from "three";
 import ModelPart from "./ModelPart.js";
-import { buildModel, disposeOfGroup, getBoxUVs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
+import { buildModel, disposeOfGroup, formatSkin, getBoxUVs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
 import PlayerModelOptions from "../interface/PlayerModelOptions.js";
 import MantleRenderer from "../MantleRenderer.js";
 import GenericModel from "../interface/GenericModel.js";
@@ -222,7 +222,9 @@ export default class PlayerModel {
             this.skinTexture.dispose();
         }
 
-        this.skinTexture = await this.renderer.platformUtils.createTexture(skin);
+        const formattedSkin = await formatSkin(skin, this.renderer.platformUtils);
+
+        this.skinTexture = await this.renderer.platformUtils.createTexture(formattedSkin);
         this.skinTexture.magFilter = NearestFilter;
         this.skinTexture.minFilter = LinearFilter;
         this.skinTexture.colorSpace = SRGBColorSpace;

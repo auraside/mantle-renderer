@@ -31,7 +31,6 @@ function loadModel(renderer: Renderer, id: string, bodyPart: string): Promise<Mo
 }
 
 
-
 const renderer = new Renderer({
     live: true,
     platformUtils: new ClientPlatformUtils(),
@@ -50,7 +49,7 @@ const renderer = new Renderer({
     shadows: true
 });
 
-loadModel(renderer, "scythe", "body");
+loadModel(renderer, "vy9qy", "body");
 
 
 function resize() {
