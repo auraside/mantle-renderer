@@ -30,9 +30,11 @@ export default class ServerPlatformUtils extends BasePlatformUtils {
         return 1;
     }
 
-    async createTexture(url: string) {
-        const canvas = await this.urlToCanvas(url);
-        return new CanvasTexture(canvas as any);
+    async createTexture(url: string | Canvas.Canvas) {
+        if (typeof url == "string") {
+            url = await this.urlToCanvas(url);
+        }
+        return new CanvasTexture(url as any);
     }
 
     urlToCanvas(url: string) {

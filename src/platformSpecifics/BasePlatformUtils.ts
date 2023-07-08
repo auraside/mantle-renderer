@@ -30,7 +30,7 @@ export default abstract class BasePlatformUtils {
 
     abstract getDevicePixelRatio(): number
 
-    abstract createTexture(url: string): Promise<Texture>
+    abstract createTexture(url: string | HTMLCanvasElement | Canvas): Promise<Texture>
 
     abstract urlToCanvas(url: string): Promise<Canvas | HTMLCanvasElement>
 }

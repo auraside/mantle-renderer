@@ -1,4 +1,4 @@
-import { TextureLoader } from "three";
+import { CanvasTexture, TextureLoader } from "three";
 import BasePlatformUtils, { Platform } from "./BasePlatformUtils.js";
 import { Canvas } from "canvas";
 
@@ -25,9 +25,13 @@ export default class ClientPlatformUtils extends BasePlatformUtils {
         return window.devicePixelRatio;
     }
 
-    async createTexture(url: string) {
-        const texture = await new TextureLoader().loadAsync(url);
-        return texture;
+    async createTexture(url: string | HTMLCanvasElement) {
+        if (typeof url == "string") {
+            const texture = await new TextureLoader().loadAsync(url);
+            return texture;
+        } else {
+            return new CanvasTexture(url);
+        }
     }
     
     urlToCanvas(url: string) {

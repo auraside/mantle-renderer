@@ -324,5 +324,5 @@ export async function formatSkin(skin: string | Canvas | HTMLCanvasElement, plat
         ctx.putImageData(inCtx.getImageData(48, 52, 16, 12), 48, 52); // rest of left sleeve
     }
 
-    return canvas.toDataURL();
+    return canvas;
 }

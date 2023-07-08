@@ -222,9 +222,9 @@ export default class PlayerModel {
             this.skinTexture.dispose();
         }
 
-        const formattedSkin = await formatSkin(skin, this.renderer.platformUtils);
+        const canvas = await formatSkin(skin, this.renderer.platformUtils);
 
-        this.skinTexture = await this.renderer.platformUtils.createTexture(formattedSkin);
+        this.skinTexture = await this.renderer.platformUtils.createTexture(canvas);
         this.skinTexture.magFilter = NearestFilter;
         this.skinTexture.minFilter = LinearFilter;
         this.skinTexture.colorSpace = SRGBColorSpace;
