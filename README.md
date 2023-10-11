@@ -15,7 +15,7 @@ const renderer = new MantleRenderer({
     platformUtils: new ClientPlatformUtils(),
     canvas: canvasElement,
     player: {
-        skin: "EYE2AH",
+        skin: "https://textures.minecraft.net/texture/7f608010686ff1d32c7323967ae9ee6599983b28f776a3b30f435a1e11822b9c",
         slim: false
     },
     antialias: true,

@@ -116,3 +116,15 @@ renderer.scene.traverse(child => {
         child.castShadow = true;
     }
 });
+
+
+renderer.addEventListener("prerender", () => {
+    const time = renderer.getRenderTime();
+    const player = renderer.player!;
+
+    player.getBodyPart("armLeft")!.pivot.rotation.x = Math.sin(time / 150);
+    player.getBodyPart("armRight")!.pivot.rotation.x = -Math.sin(time / 150);
+    
+    player.getBodyPart("legLeft")!.pivot.rotation.x = Math.sin(time / 150);
+    player.getBodyPart("legRight")!.pivot.rotation.x = -Math.sin(time / 150);
+});

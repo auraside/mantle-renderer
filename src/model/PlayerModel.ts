@@ -168,19 +168,6 @@ export default class PlayerModel {
 
         this.setSlim(!!options.slim);
         this.group.add(body.pivot);
-
-
-
-
-        this.renderer.addEventListener("prerender", () => {
-            const time = this.renderer.getRenderTime();
-
-            this.getBodyPart("armLeft")!.pivot.rotation.x = Math.sin(time / 150);
-            this.getBodyPart("armRight")!.pivot.rotation.x = -Math.sin(time / 150);
-            
-            this.getBodyPart("legLeft")!.pivot.rotation.x = Math.sin(time / 150);
-            this.getBodyPart("legRight")!.pivot.rotation.x = -Math.sin(time / 150);
-        });
     }
 
     public getMesh() {
