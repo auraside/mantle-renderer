@@ -5,6 +5,7 @@ src/
 tests/
 .github/
 node_modules/
+dist/
 
 *.tgz
 tsconfig.json

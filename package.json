@@ -2,12 +2,14 @@
   "name": "mantle-renderer",
   "version": "1.2.1",
   "description": "A Minecraft-focused WebGL powered 3D renderer built for both the browser and server.",
-  "main": "dist/Index.js",
+  "main": "cjs/Index.js",
   "type": "module",
   "scripts": {
     "rimraf": "./node_modules/rimraf/bin.js",
-    "clean": "npx rimraf dist/",
-    "build": "npm run clean && npx tsc",
+    "clean": "npx rimraf cjs/ && npx rimraf esm/",
+    "build": "npm run clean && npm run build:cjs && npm run build:esm",
+    "build:cjs": "npx tsc --module commonjs --outDir cjs/ && echo {\"type\": \"commonjs\"} > cjs/package.json",
+    "build:esm": "npx tsc --module es2022 --outDir esm/ && echo {\"type\": \"module\"} > esm/package.json",
     "i": "npm install && npm --prefix dev-client install",
     "check": "npx tsc --noEmit",
     "push": "npm run build && npm publish",
@@ -16,6 +18,10 @@
     "dev:server": "npx ts-node ./dev-server/main.ts",
     "test:memory": "npx ts-node ./tests/memoryLeak/MemoryLeak.ts",
     "test:xvfb": "xvfb-run -s \"-ac -screen 0 1280x1024x24\" npm run dev:server"
+  },
+  "exports": {
+    "require": "./cjs/Index.js",
+    "import": "./esm/Index.js"
   },
   "keywords": [
     "Minecraft",
