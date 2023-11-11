@@ -1,9 +1,9 @@
-import { BoxGeometry, BufferAttribute, BufferGeometry, DoubleSide, Group, Material, Mesh, MeshStandardMaterial, NearestFilter, SRGBColorSpace, Texture, Vector2 } from "three";
+import { BoxGeometry, BufferAttribute, BufferGeometry, DoubleSide, Group, Material, Mesh, MeshLambertMaterial, NearestFilter, SRGBColorSpace, Texture, Vector2 } from "three";
 import GenericModel, { Coordinate, GenericModelElement, GenericModelFace, GenericModelFaceUv, GenericModelTexture } from "./interface/GenericModel.js"
 import { average, degreesToRadians } from "./Utils.js";
 import ModelPart from "./model/ModelPart.js";
 import ModelInfo from "./interface/ModelInfo.js";
-import BasePlatformUtils, { Canvas2d } from "./platformSpecifics/BasePlatformUtils.js";
+import BasePlatformUtils from "./platformSpecifics/BasePlatformUtils.js";
 import { Canvas } from "canvas";
 
 export function getFaceVertices(x1: number, y1: number, x2: number, y2: number, textureWidth: number, textureHeight: number) {
@@ -189,7 +189,7 @@ export async function buildModel(model: GenericModel, platformUtils: BasePlatfor
             }
             outModel.textures[i] = texture;
     
-            const material = new MeshStandardMaterial({
+            const material = new MeshLambertMaterial({
                 map: texture,
                 side: DoubleSide,
                 transparent: true,

@@ -1,4 +1,4 @@
-import { BoxGeometry, DoubleSide, FrontSide, Group, LinearFilter, Material, MeshStandardMaterial, NearestFilter, SRGBColorSpace, Texture } from "three";
+import { BoxGeometry, DoubleSide, FrontSide, Group, LinearFilter, Material, MeshLambertMaterial, NearestFilter, SRGBColorSpace, Texture } from "three";
 import ModelPart from "./ModelPart.js";
 import { buildModel, disposeOfGroup, formatSkin, getBoxUVs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
 import PlayerModelOptions from "../interface/PlayerModelOptions.js";
@@ -20,11 +20,11 @@ export default class PlayerModel {
     private disposableObjects: DisposableObject[] = [];
 
     public constructor(private readonly renderer: MantleRenderer, options: PlayerModelOptions) {
-        this.skinMaterial = new MeshStandardMaterial({
+        this.skinMaterial = new MeshLambertMaterial({
             side: FrontSide
         });
         this.disposableObjects.push(this.skinMaterial);
-        this.transparentSkinMaterial = new MeshStandardMaterial({
+        this.transparentSkinMaterial = new MeshLambertMaterial({
             side: DoubleSide,
             transparent: true,
             alphaTest: 1e-5
@@ -283,7 +283,7 @@ export default class PlayerModel {
         texture.colorSpace = SRGBColorSpace;
         this.disposableObjects.push(texture);
 
-        const material = new MeshStandardMaterial({
+        const material = new MeshLambertMaterial({
             map: texture,
             side: DoubleSide,
             transparent: true,
