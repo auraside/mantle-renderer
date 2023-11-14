@@ -326,3 +326,10 @@ export async function formatSkin(skin: string | Canvas | HTMLCanvasElement, plat
 
     return canvas;
 }
+
+
+export function avoidZFighting(model: GenericModel, epsilon = 0.001) {
+    for (let element of model.elements) {
+        element.size = element.size.map(n => Math.max(n, epsilon)) as Coordinate;
+    }
+}
