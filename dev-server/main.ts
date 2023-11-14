@@ -1,7 +1,8 @@
 import * as FS from "fs";
 import * as Path from "path";
-import MantleRenderer, { formatSkin } from "../src/Index.js";
-import ServerPlatformUtils from "../src/platformSpecifics/ServerPlatformUtils.js"
+import MantleRenderer, { formatSkin, ServerPlatformUtils } from "../src/Index.js";
+import GL from "gl";
+import Canvas from "canvas";
 
 const imagePath = Path.join("dev-server", "test.png");
 try {
@@ -10,7 +11,7 @@ try {
 
 const renderer = new MantleRenderer({
     live: false,
-    platformUtils: new ServerPlatformUtils(),
+    platformUtils: new ServerPlatformUtils(GL, Canvas),
     ambientLight: {
         intensity: 0.5,
         color: 0xffffff

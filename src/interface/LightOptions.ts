@@ -1,6 +1,6 @@
 import { ColorRepresentation } from "three";
 
-export default interface LightOptions {
+export interface LightOptions {
     color?: ColorRepresentation
     intensity?: number
 }

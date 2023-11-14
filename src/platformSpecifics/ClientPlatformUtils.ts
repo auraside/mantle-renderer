@@ -1,5 +1,5 @@
 import { CanvasTexture, TextureLoader } from "three";
-import BasePlatformUtils, { Platform } from "./BasePlatformUtils.js";
+import { Platform, BasePlatformUtils } from "./BasePlatformUtils.js";
 
 export class ClientPlatformUtils extends BasePlatformUtils {
     getPlatform() {

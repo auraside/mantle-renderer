@@ -1,13 +1,13 @@
 import { BoxGeometry, DoubleSide, FrontSide, Group, LinearFilter, Material, MeshLambertMaterial, NearestFilter, SRGBColorSpace, Texture } from "three";
-import ModelPart from "./ModelPart.js";
+import { ModelPart } from "./ModelPart.js";
 import { buildModel, disposeOfGroup, formatSkin, getBoxUVs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
-import PlayerModelOptions from "../interface/PlayerModelOptions.js";
-import MantleRenderer from "../MantleRenderer.js";
-import GenericModel from "../interface/GenericModel.js";
-import DisposableObject from "../interface/DisposableObject.js";
-import ModelInfo from "../interface/ModelInfo.js";
+import { PlayerModelOptions } from "../interface/PlayerModelOptions.js";
+import { MantleRenderer } from "../MantleRenderer.js";
+import { DisposableObject } from "../interface/DisposableObject.js";
+import { ModelInfo } from "../interface/ModelInfo.js";
+import { GenericModel } from "../interface/GenericModel.js";
 
-export default class PlayerModel {
+export class PlayerModel {
     private readonly group = new Group();
     private readonly modelParts: Map<string, ModelPart> = new Map();
     private skinTexture: Texture | undefined;

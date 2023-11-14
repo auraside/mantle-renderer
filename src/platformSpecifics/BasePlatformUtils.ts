@@ -21,7 +21,7 @@ export enum Platform {
     CLIENT = "Client"
 }
 
-export default abstract class BasePlatformUtils {
+export abstract class BasePlatformUtils {
     abstract getPlatform(): Platform
 
     abstract create3dCanvas(width: number, height: number): Canvas3d

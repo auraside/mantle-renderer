@@ -1,5 +1,4 @@
-import MantleRenderer from "./MantleRenderer.js"
-
+import { MantleRenderer } from "./MantleRenderer.js"
 export default MantleRenderer;
 
 export * from "./ModelUtils.js"

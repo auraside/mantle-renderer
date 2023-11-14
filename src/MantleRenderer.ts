@@ -8,15 +8,16 @@ import { SSAARenderPass } from "three/addons/postprocessing/SSAARenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import RendererOptions from "./interface/RendererOptions.js";
-import PlayerModel from "./model/PlayerModel.js";
-import DisposableObject from "./interface/DisposableObject.js";
-import BasePlatformUtils, { Platform } from "./platformSpecifics/BasePlatformUtils.js";
+import { RendererOptions } from "./interface/RendererOptions.js";
+import { PlayerModel } from "./model/PlayerModel.js";
+import { DisposableObject } from "./interface/DisposableObject.js";
+import { BasePlatformUtils} from "./platformSpecifics/BasePlatformUtils.js";
+import { Platform } from "./platformSpecifics/BasePlatformUtils.js";
 import { Canvas } from "canvas";
 
 export type EventType = "resize" | "prerender" | "postrender";
 
-export default class MantleRenderer {
+export class MantleRenderer {
     private destroyed = false;
     private readonly renderer: WebGLRenderer;
     public readonly platformUtils: BasePlatformUtils;

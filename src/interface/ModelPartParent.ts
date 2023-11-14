@@ -1,6 +1,6 @@
-import ModelPart from "../model/ModelPart.js";
+import { ModelPart } from "../model/ModelPart.js";
 
-export default interface ModelPartParent {
+export interface ModelPartParent {
     part: ModelPart
 
     xOffset?: number

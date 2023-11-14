@@ -1,5 +1,5 @@
-import BasePlatformUtils, { Canvas3d } from "../platformSpecifics/BasePlatformUtils.js"
-import LightOptions from "./LightOptions.js"
+import { Canvas3d, BasePlatformUtils } from "../platformSpecifics/BasePlatformUtils.js"
+import { LightOptions } from "./LightOptions.js"
 
 export interface RendererPlayerOptions {
     skin?: string // path, url, username or uuid
@@ -13,7 +13,7 @@ export interface RendererBloomOptions {
     radius: number // spread of bloom
 }
 
-export default interface RendererOptions {
+export interface RendererOptions {
     live: boolean
     platformUtils: BasePlatformUtils
     

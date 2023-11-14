@@ -1,4 +1,4 @@
-import ModelPart from "../model/ModelPart.js";
+import { ModelPart } from "../model/ModelPart.js";
 
 export interface GenericModelTexture {
     name: string
@@ -34,7 +34,7 @@ export interface GenericModelElement {
     uv: GenericModelElementUvs
 }
 
-export default interface GenericModel {
+export interface GenericModel {
     attachTo?: ModelPart
     offset?: Coordinate
 

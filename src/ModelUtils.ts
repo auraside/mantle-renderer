@@ -1,9 +1,9 @@
 import { BoxGeometry, BufferAttribute, BufferGeometry, DoubleSide, Group, Material, Mesh, MeshLambertMaterial, NearestFilter, SRGBColorSpace, Texture, Vector2 } from "three";
-import GenericModel, { Coordinate, GenericModelElement, GenericModelFace, GenericModelFaceUv, GenericModelTexture } from "./interface/GenericModel.js"
+import { Coordinate, GenericModelElement, GenericModelFace, GenericModelFaceUv, GenericModelTexture, GenericModel } from "./interface/GenericModel.js"
 import { average, degreesToRadians } from "./Utils.js";
-import ModelPart from "./model/ModelPart.js";
-import ModelInfo from "./interface/ModelInfo.js";
-import BasePlatformUtils from "./platformSpecifics/BasePlatformUtils.js";
+import { ModelPart } from "./model/ModelPart.js";
+import { ModelInfo } from "./interface/ModelInfo.js";
+import { BasePlatformUtils } from "./platformSpecifics/BasePlatformUtils.js";
 import { Canvas } from "canvas";
 
 export function getFaceVertices(x1: number, y1: number, x2: number, y2: number, textureWidth: number, textureHeight: number) {

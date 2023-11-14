@@ -1,7 +1,6 @@
 import './style.css'
 
-import Renderer, { parseJavaBlockModel, ClientPlatformUtils } from "../../src/Index";
-import ModelInfo from '../../src/interface/ModelInfo';
+import Renderer, { parseJavaBlockModel, ClientPlatformUtils, ModelInfo } from "../../src/Index";
 import { BoxGeometry, DirectionalLight, Mesh, ShadowMaterial } from 'three';
 
 const canvas = document.createElement("canvas");

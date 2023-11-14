@@ -1,7 +1,7 @@
 import { BufferGeometry, Group, Material, Mesh } from "three";
-import ModelPartParent from "../interface/ModelPartParent.js";
+import { ModelPartParent } from "../interface/ModelPartParent.js";
 
-export default class ModelPart {
+export class ModelPart {
     public mesh: Mesh;
     public pivot = new Group();
 

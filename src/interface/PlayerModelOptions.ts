@@ -1,4 +1,4 @@
-export default interface PlayerModelOptions {
+export interface PlayerModelOptions {
     skin: string
     slim?: boolean
     onSkinLoad?: () => void

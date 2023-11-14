@@ -1,9 +1,16 @@
-import GL from "gl";
-import BasePlatformUtils, { Platform } from "./BasePlatformUtils.js";
-import Canvas from "canvas";
+import type GL from "gl";
+import { Platform, BasePlatformUtils } from "./BasePlatformUtils.js";
+import type Canvas from "canvas";
 import { CanvasTexture } from "three";
 
 export class ServerPlatformUtils extends BasePlatformUtils {
+    constructor(
+        private readonly gl: typeof GL,
+        private readonly canvas: typeof Canvas
+    ) {
+        super();
+    }
+
     getPlatform() {
         return Platform.SERVER;
     }
@@ -16,14 +23,14 @@ export class ServerPlatformUtils extends BasePlatformUtils {
             offsetHeight: height,
             addEventListener: () => {},
             removeEventListener: () => {},
-            getContext: (...params: any) => GL(width, height, {
+            getContext: (...params: any) => this.gl(width, height, {
                 preserveDrawingBuffer: true
             })
         }
     }
 
     create2dCanvas(width: number, height: number) {
-        return Canvas.createCanvas(width, height);
+        return this.canvas.createCanvas(width, height);
     }
 
     getDevicePixelRatio() {
@@ -39,11 +46,11 @@ export class ServerPlatformUtils extends BasePlatformUtils {
 
     urlToCanvas(url: string) {
         return new Promise<Canvas.Canvas>((resolve, reject) => {
-            const image = new Canvas.Image();
+            const image = new this.canvas.Image();
             
             image.onerror = reject;
             image.onload = () => {
-                const canvas = Canvas.createCanvas(image.width, image.height);
+                const canvas = this.canvas.createCanvas(image.width, image.height);
                 canvas.getContext("2d").drawImage(image, 0, 0, image.width, image.height);
                 
                 resolve(canvas);
