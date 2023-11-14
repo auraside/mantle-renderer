@@ -1,9 +1,9 @@
 import GL from "gl";
 import BasePlatformUtils, { Platform } from "./BasePlatformUtils.js";
 import Canvas from "canvas";
-import { CanvasTexture, Texture } from "three";
+import { CanvasTexture } from "three";
 
-export default class ServerPlatformUtils extends BasePlatformUtils {
+export class ServerPlatformUtils extends BasePlatformUtils {
     getPlatform() {
         return Platform.SERVER;
     }

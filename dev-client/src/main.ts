@@ -1,9 +1,8 @@
 import './style.css'
 
-import Renderer, { parseJavaBlockModel } from "../../src/Index";
+import Renderer, { parseJavaBlockModel, ClientPlatformUtils } from "../../src/Index";
 import ModelInfo from '../../src/interface/ModelInfo';
 import { BoxGeometry, DirectionalLight, Mesh, ShadowMaterial } from 'three';
-import ClientPlatformUtils from '../../src/platformSpecifics/ClientPlatformUtils';
 
 const canvas = document.createElement("canvas");
 document.querySelector("#app")!.appendChild(canvas);
