@@ -269,7 +269,9 @@ export class PlayerModel {
 
     public async setCape(url: string | null) {
         if (this.cape) {
-            this.removeModel(this.cape);
+            try {
+                this.removeModel(this.cape);
+            } catch {}
         }
 
         if (!url) {
