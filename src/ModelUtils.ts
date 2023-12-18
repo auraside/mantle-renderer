@@ -68,78 +68,6 @@ export function updateMaterialTexture(material: Material, texture: Texture, disp
     material.needsUpdate = true;
 }
 
-export function parseJavaBlockModel(json: any, textureUrl: string, offset?: Coordinate, attachTo?: ModelPart) {
-    const texture: GenericModelTexture = {
-        name: Object.keys(json.textures)[0],
-        url: textureUrl,
-        width: 16,
-        height: 16
-    };
-
-    const elements: GenericModelElement[] = [];
-    for (let jsonElement of json.elements) {
-        const position: Coordinate = [
-            average(jsonElement.from[0], jsonElement.to[0]),
-            average(jsonElement.from[1], jsonElement.to[1]),
-            average(jsonElement.from[2], jsonElement.to[2])
-        ]
-
-        const size: Coordinate = [
-            Math.abs(jsonElement.from[0] - jsonElement.to[0]),
-            Math.abs(jsonElement.from[1] - jsonElement.to[1]),
-            Math.abs(jsonElement.from[2] - jsonElement.to[2])
-        ]
-
-        const rotation: Coordinate = [0, 0, 0];
-        const origin: Coordinate = [0, 0, 0];
-        if (jsonElement.rotation) {
-            origin.splice(0, 3, ...jsonElement.rotation.origin);
-            const rotationIndex = ["x", "y", "z"].indexOf(jsonElement.rotation.axis.toLowerCase());
-            rotation[rotationIndex] = degreesToRadians(jsonElement.rotation.angle);
-        }
-
-        function getUv(face: any): GenericModelFaceUv {
-            face = jsonElement.faces[face];
-            
-            let texture: string = face.texture;
-            if (texture.startsWith("#") && !isNaN(parseInt(texture.substring(1)))) {
-                texture = texture.substring(1);
-            }
-
-            return {
-                texture,
-                uv: face.uv
-            }
-        }
-        
-        const element: GenericModelElement = {
-            position,
-            size,
-            rotation,
-            origin,
-            uv: {
-                top: getUv("up"),
-                bottom: getUv("down"),
-                left: getUv("east"),
-                right: getUv("west"),
-                front: getUv("north"),
-                back: getUv("south")
-            }
-        }
-
-        elements.push(element);
-    }
-
-    const model: GenericModel = {
-        attachTo,
-        offset,
-        textures: [texture],
-        elements
-    }
-
-    return model;
-}
-
 
 // Disposes of geometry, meshes & groups. Materials & textures still need to be manually disposed of.
 export function disposeOfGroup(object: Mesh | Group) {
@@ -215,14 +143,25 @@ export async function buildModel(model: GenericModel, platformUtils: BasePlatfor
 
         for (let i = 0; i < 6; i++) {
             const uv = element.uv[faceOrder[i]];
-            const materialIndex = Object.keys(textures).indexOf(uv.texture);
-            const textureInfo = textures[uv.texture];
-            geometry.groups[i].materialIndex = materialIndex;
-            const vertices = getFaceVertices(uv.uv[0], uv.uv[1], uv.uv[2], uv.uv[3], textureInfo.width, textureInfo.height);
-            uvs.set(faceOrder[i], vertices);
+            if (uv) {
+                const materialIndex = Object.keys(textures).indexOf(uv.texture);
+                const textureInfo = textures[uv.texture];
+                geometry.groups[i].materialIndex = materialIndex;
+                const vertices = getFaceVertices(uv.uv[0], uv.uv[1], uv.uv[2], uv.uv[3], textureInfo.width, textureInfo.height);
+                uvs.set(faceOrder[i], vertices);
+            }
         }
+
+        const BLANK_UV = [new Vector2(), new Vector2(), new Vector2(), new Vector2()];
         
-        setUvs(geometry, orderUvs(uvs.get("top")!, uvs.get("bottom")!, uvs.get("left")!, uvs.get("right")!, uvs.get("front")!, uvs.get("back")!));
+        setUvs(geometry, orderUvs(
+            uvs.get("top") || BLANK_UV,
+            uvs.get("bottom") || BLANK_UV,
+            uvs.get("left") || BLANK_UV,
+            uvs.get("right") || BLANK_UV,
+            uvs.get("front") || BLANK_UV,
+            uvs.get("back") || BLANK_UV
+        ));
 
         const part = new ModelPart(
             geometry,

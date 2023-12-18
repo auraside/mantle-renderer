@@ -1,6 +1,6 @@
 import * as FS from "fs";
 import * as Path from "path";
-import MantleRenderer, { formatSkin, ServerPlatformUtils } from "../src/Index.js";
+import MantleRenderer, { ServerPlatformUtils } from "../src/Index.js";
 import GL from "gl";
 import Canvas from "canvas";
 

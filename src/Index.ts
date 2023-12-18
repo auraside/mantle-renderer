@@ -15,5 +15,8 @@ export * from "./interface/RendererOptions.js"
 export * from "./model/ModelPart.js"
 export * from "./model/PlayerModel.js"
 
+export * from "./parsers/OptifineJem.js"
+export * from "./parsers/JavaBlockItem.js"
+
 export { ServerPlatformUtils } from "./platformSpecifics/ServerPlatformUtils.js";
 export { ClientPlatformUtils } from "./platformSpecifics/ClientPlatformUtils.js";

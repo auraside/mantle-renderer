@@ -17,12 +17,12 @@ export interface GenericModelFaceUv {
 export type GenericModelFace = "top" | "bottom" | "left" | "right" | "front" | "back"
 
 export interface GenericModelElementUvs {
-    top: GenericModelFaceUv
-    bottom: GenericModelFaceUv
-    left: GenericModelFaceUv
-    right: GenericModelFaceUv
-    front: GenericModelFaceUv
-    back: GenericModelFaceUv
+    top?: GenericModelFaceUv
+    bottom?: GenericModelFaceUv
+    left?: GenericModelFaceUv
+    right?: GenericModelFaceUv
+    front?: GenericModelFaceUv
+    back?: GenericModelFaceUv
 }
 
 export interface GenericModelElement {

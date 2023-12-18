@@ -48,11 +48,11 @@ Minecraft: Java Edition block models can be converted to the Mantle Renderer for
 const blockModel = {...};
 const textureUrl = "https://example.com/texture.png";
 
-const mantleModel = parseJavaBlockModel(blockModel, textureUrl);
+const mantleModel = parseJavaBlockItem(blockModel, textureUrl);
 ```
 The model can then be imported directly into the scene. It's noted that using this technique, you'll need to dispose of the model's geometry, materials and textures yourself.
 ```ts
-const mantleModel = parseJavaBlockModel(blockModel, textureUrl);
+const mantleModel = parseJavaBlockItem(blockModel, textureUrl);
 
 const { mesh } = await buildModel(mantleModel);
 
@@ -61,7 +61,7 @@ renderer.scene.add(mesh);
 
 Alternatively, the model can be attached directly to a player model. Using this technique, the model's resources will automatically be released when the renderer is destroyed or the model is removed.
 ```ts
-const mantleModel = parseJavaBlockModel(blockModel, textureUrl, [0, 0, 0], renderer.player.getBodyPart("head"));
+const mantleModel = parseJavaBlockItem(blockModel, textureUrl, [0, 0, 0], renderer.player.getBodyPart("head"));
 
 await renderer.player.addModel(model);
 ```
@@ -81,9 +81,12 @@ Read more about this in the [Headless GL documentation](https://github.com/stack
 
 In order to not depend on a browser, the renderer's `platformUtils` needs to be adjusted.
 ```ts
+import Gl from "gl";
+import Canvas from "canvas";
+
 const renderer = new MantleRenderer({
     live: false,
-    platformUtils: new ServerPlatformUtils()
+    platformUtils: new ServerPlatformUtils(Gl, Canvas)
 });
 ```
 

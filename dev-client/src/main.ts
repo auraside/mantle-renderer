@@ -1,6 +1,6 @@
 import './style.css'
 
-import Renderer, { parseJavaBlockModel, ClientPlatformUtils, ModelInfo } from "../../src/Index";
+import Renderer, { parseJavaBlockItem, ClientPlatformUtils, ModelInfo, parseOptifineJem, buildModel } from "../../src/Index";
 import { BoxGeometry, DirectionalLight, Mesh, ShadowMaterial } from 'three';
 
 const canvas = document.createElement("canvas");
@@ -14,7 +14,7 @@ function loadModel(renderer: Renderer, id: string, bodyPart: string): Promise<Mo
         if (!renderer.player) return reject("Player isn't in scene");
         fetch(`https://dev-assets.mantle.gg/model/${id}.json`).then(r => r.json()).then(async r => {
             if (!renderer.player) throw "Player isn't in scene";
-            const model = parseJavaBlockModel(r, `https://dev-assets.mantle.gg/model/${id}.png`, [-8, 8, -8], renderer.player.getBodyPart(bodyPart)!);
+            const model = parseJavaBlockItem(r, `https://dev-assets.mantle.gg/model/${id}.png`, [-8, 8, -8], renderer.player.getBodyPart(bodyPart)!);
             const outModel = await renderer.player.addModel(model, true);
 
             outModel.mesh.traverse(child => {
@@ -34,7 +34,7 @@ const renderer = new Renderer({
     platformUtils: new ClientPlatformUtils(),
     canvas,
     ambientLight: {
-        intensity: 0
+        intensity: 0.2
     },
     player: {
         onSkinLoad: () => console.log("SKIN LOADED!")
@@ -56,6 +56,16 @@ function resize() {
 
 window.addEventListener("resize", resize);
 resize();
+
+
+
+// fetch("/assets/angel_wings/model.cfg").then(r => r.json()).then(async r => {
+//     const optifineModel = parseOptifineJem(r, "/assets/angel_wings/texture.png");
+//     console.log(optifineModel);
+//     const model = await buildModel(optifineModel, new ClientPlatformUtils());
+//     model.mesh.position.y = 30;
+//     renderer.scene.add(model.mesh);
+// });
 
 
 
