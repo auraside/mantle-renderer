@@ -6,9 +6,7 @@ import { BoxGeometry, DirectionalLight, Mesh, ShadowMaterial } from 'three';
 const canvas = document.createElement("canvas");
 document.querySelector("#app")!.appendChild(canvas);
 
-
-
-
+// @ts-ignore
 function loadModel(renderer: Renderer, id: string, bodyPart: string): Promise<ModelInfo> {
     return new Promise((resolve, reject) => {
         if (!renderer.player) return reject("Player isn't in scene");
@@ -47,8 +45,7 @@ const renderer = new Renderer({
     shadows: true
 });
 
-loadModel(renderer, "vy9qy", "body");
-
+//loadModel(renderer, "vy9qy", "body");
 
 function resize() {
     renderer.setSize(window.innerWidth - 40, window.innerHeight - 40);
@@ -57,18 +54,14 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
-
-
-// fetch("/assets/angel_wings/model.cfg").then(r => r.json()).then(async r => {
-//     const optifineModel = parseOptifineJem(r, "/assets/angel_wings/texture.png");
-//     console.log(optifineModel);
-//     const model = await buildModel(optifineModel, new ClientPlatformUtils());
-//     model.mesh.position.y = 30;
-//     renderer.scene.add(model.mesh);
-// });
-
-
-
+fetch("/assets/model.cfg").then(r => r.json()).then(async r => {
+    const optifineModel = parseOptifineJem(r, "/assets/texture.png", renderer);
+    console.log(optifineModel);
+    const model = await buildModel(optifineModel, new ClientPlatformUtils());
+    //model.mesh.position.y = -30;
+    optifineModel.attachTo?.pivot.add(model.mesh);
+    //renderer.scene.add(model.mesh);
+});
 
 document.querySelector("#steve")?.addEventListener("click", () => renderer.player?.setSlim(false));
 document.querySelector("#alex")?.addEventListener("click", () => renderer.player?.setSlim(true));
@@ -130,9 +123,9 @@ renderer.addEventListener("prerender", () => {
     const time = renderer.getRenderTime();
     const player = renderer.player!;
 
-    player.getBodyPart("armLeft")!.pivot.rotation.x = Math.sin(time / 150);
-    player.getBodyPart("armRight")!.pivot.rotation.x = -Math.sin(time / 150);
+    player.getBodyPart("leftArm")!.pivot.rotation.x = Math.sin(time / 150);
+    player.getBodyPart("rightArm")!.pivot.rotation.x = -Math.sin(time / 150);
     
-    player.getBodyPart("legLeft")!.pivot.rotation.x = Math.sin(time / 150);
-    player.getBodyPart("legRight")!.pivot.rotation.x = -Math.sin(time / 150);
+    player.getBodyPart("leftLeg")!.pivot.rotation.x = Math.sin(time / 150);
+    player.getBodyPart("rightLeg")!.pivot.rotation.x = -Math.sin(time / 150);
 });

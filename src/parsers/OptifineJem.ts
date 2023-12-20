@@ -1,4 +1,5 @@
 import { Coordinate, GenericModel, GenericModelElement, rotate3d, degreesToRadians } from "../Index.js";
+import {MantleRenderer} from "../MantleRenderer.js";
 
 type OptifineModel = {
     type: string; // should be "PlayerItem" for cosmetics
@@ -69,12 +70,18 @@ const UV_SIDES: Record<GenericUv, OptifineUv> = {
     bottom: "uvDown"
 } as const;
 
-export function parseOptifineJem(jem: OptifineModel, texture: string): GenericModel {
+export function parseOptifineJem(jem: OptifineModel, texture: string, renderer: MantleRenderer): GenericModel {
     const bones: BoneContainer[] = jem.models.map(bone => ({
         bones: [bone],
         worldOrigin: [0, 0, 0],
         worldRotation: [0, 0, 0]
     }));
+
+    let attachTo: string | undefined = bones.find(boneTree => boneTree.bones.slice(-1)[0]?.attachTo)?.bones.slice(-1)[0]?.attachTo;
+
+    if (!attachTo) {
+        throw new Error("No attachTo found in Optifine JEM");
+    }
 
     const elements: GenericModelElement[] = [];
 
@@ -104,16 +111,7 @@ export function parseOptifineJem(jem: OptifineModel, texture: string): GenericMo
         }
 
         if (parentBone.boxes?.length) {
-            let invertAxis: AxisInversion | undefined;
-            for (let i = boneTree.bones.length - 1; i >= 0; i--) {
-                if (boneTree.bones[i].invertAxis !== undefined) {
-                    invertAxis = boneTree.bones[i].invertAxis!;
-                    break;
-                }
-            }
-            if (invertAxis === undefined) {
-                invertAxis = "";
-            }
+            let invertAxis: AxisInversion | string = boneTree.bones.slice().reverse().find(bone => bone.invertAxis)?.invertAxis || "";
 
             for (let box of parentBone.boxes) {
                 const size = box.coordinates.slice(3) as Coordinate;
@@ -207,6 +205,7 @@ export function parseOptifineJem(jem: OptifineModel, texture: string): GenericMo
             width: jem.textureSize[0],
             height: jem.textureSize[1]
         }],
-        elements
+        elements,
+        attachTo: renderer.player?.getBodyPart(attachTo)!
     }
 }
