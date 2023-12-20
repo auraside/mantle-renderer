@@ -81,7 +81,7 @@ export class PlayerModel {
 
         
         // right arm & sleeve
-        this.modelParts.set("armRight", new ModelPart(
+        this.modelParts.set("rightArm", new ModelPart(
             new BoxGeometry(1, 1, 1),
             this.skinMaterial,
             {
@@ -93,13 +93,13 @@ export class PlayerModel {
             new BoxGeometry(1, 1, 1),
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("armRight")!
+                part: this.getBodyPart("rightArm")!
             }
         ));
         
 
         // left arm & sleeve
-        this.modelParts.set("armLeft", new ModelPart(
+        this.modelParts.set("leftArm", new ModelPart(
             new BoxGeometry(1, 1, 1),
             this.skinMaterial,
             {
@@ -111,16 +111,16 @@ export class PlayerModel {
             new BoxGeometry(1, 1, 1),
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("armLeft")!
+                part: this.getBodyPart("leftArm")!
             }
         ));
 
 
         // right leg & trouser
-        const legLeftGeometry = new BoxGeometry(4, 12, 4);
-        setUvs(legLeftGeometry, getBoxUVs(16, 48, 4, 12, 4, 64, 64));
-        this.modelParts.set("legRight", new ModelPart(
-            legLeftGeometry,
+        const leftLegGeometry = new BoxGeometry(4, 12, 4);
+        setUvs(leftLegGeometry, getBoxUVs(16, 48, 4, 12, 4, 64, 64));
+        this.modelParts.set("rightLeg", new ModelPart(
+            leftLegGeometry,
             this.skinMaterial,
             {
                 part: body,
@@ -135,16 +135,16 @@ export class PlayerModel {
             trouserLeftGeometry,
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("legRight")!
+                part: this.getBodyPart("rightLeg")!
             }
         ));
 
 
         // left leg & trouser
-        const legRightGeometry = new BoxGeometry(4, 12, 4);
-        setUvs(legRightGeometry, getBoxUVs(0, 16, 4, 12, 4, 64, 64));
-        this.modelParts.set("legLeft", new ModelPart(
-            legRightGeometry,
+        const rightLegGeometry = new BoxGeometry(4, 12, 4);
+        setUvs(rightLegGeometry, getBoxUVs(0, 16, 4, 12, 4, 64, 64));
+        this.modelParts.set("leftLeg", new ModelPart(
+            rightLegGeometry,
             this.skinMaterial,
             {
                 part: body,
@@ -159,7 +159,7 @@ export class PlayerModel {
             trouserRightGeometry,
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("legLeft")!
+                part: this.getBodyPart("leftLeg")!
             }
         ));
 
@@ -181,20 +181,20 @@ export class PlayerModel {
     public setSlim(slim: boolean) {
         const armWidth = slim ? 3 : 4;
 
-        const armRight = this.modelParts.get("armRight")!;
-        armRight.mesh.scale.set(armWidth, 12, 4);
-        setUvs(armRight.geometry, getBoxUVs(40, 16, armWidth, 12, 4, 64, 64));
-        armRight.pivot.position.setX(slim ? 5.5 : 6);
+        const rightArm = this.modelParts.get("rightArm")!;
+        rightArm.mesh.scale.set(armWidth, 12, 4);
+        setUvs(rightArm.geometry, getBoxUVs(40, 16, armWidth, 12, 4, 64, 64));
+        rightArm.pivot.position.setX(slim ? 5.5 : 6);
 
         const sleeveRight = this.modelParts.get("sleeveRight")!;
         sleeveRight.mesh.scale.set((armWidth + 0.5) / armWidth, 12.5 / 12, 5 / 4);
         setUvs(sleeveRight.geometry, getBoxUVs(40, 32, armWidth, 12, 4, 64, 64));
 
 
-        const armLeft = this.modelParts.get("armLeft")!;
-        armLeft.mesh.scale.set(armWidth, 12, 4);
-        setUvs(armLeft.geometry, getBoxUVs(32, 48, armWidth, 12, 4, 64, 64));
-        armLeft.pivot.position.setX(slim ? -5.5 : -6);
+        const leftArm = this.modelParts.get("leftArm")!;
+        leftArm.mesh.scale.set(armWidth, 12, 4);
+        setUvs(leftArm.geometry, getBoxUVs(32, 48, armWidth, 12, 4, 64, 64));
+        leftArm.pivot.position.setX(slim ? -5.5 : -6);
 
         const sleeveLeft = this.modelParts.get("sleeveLeft")!;
         sleeveLeft.mesh.scale.set((armWidth + 0.5) / armWidth, 12.5 / 12, 5 / 4);
