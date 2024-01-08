@@ -19,8 +19,8 @@ export function orderUvs(top: Vector2[], bottom: Vector2[], left: Vector2[], rig
     return [
 		left[3], left[2], left[0], left[1],
         right[3], right[2], right[0], right[1],
-		top[0], top[1], top[3], top[2],
-		bottom[3], bottom[2], bottom[0], bottom[1],
+		top[1], top[0], top[2], top[3],
+		bottom[2], bottom[3], bottom[1], bottom[0],
 		back[3], back[2], back[0], back[1],
         front[3], front[2], front[0], front[1]
     ];
