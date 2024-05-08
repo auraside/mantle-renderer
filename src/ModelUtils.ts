@@ -253,6 +253,37 @@ export async function buildModel(model: GenericModel, platformUtils: BasePlatfor
 }
 
 
+export async function formatCloak(cloak: string | Canvas | HTMLCanvasElement, platformUtils: BasePlatformUtils, frames = 1) {
+    if (typeof cloak == "string") {
+        cloak = await platformUtils.urlToCanvas(cloak);
+    }
+    const width = cloak.width;
+    const height = cloak.height;
+
+    const frequently = {
+        willReadFrequently: true
+    } as any;
+
+    function handle(scale: number, frameHeight: number) {
+        const output = platformUtils.create2dCanvas(22 * scale, 17 * scale * frames) as Canvas | HTMLCanvasElement;
+        const outCtx = output.getContext("2d", frequently)! as CanvasRenderingContext2D;
+
+        for (let i = 0; i < frames; i++) {
+            outCtx.drawImage(cloak as HTMLCanvasElement, 0, frameHeight * scale * i, 22 * scale, 17 * scale, 0, 17 * scale * i, 22 * scale, 17 * scale);
+        }
+        return output;
+    }
+
+    if (width / height * frames == 64 / 32) { // 1.9 format
+        return handle(width / 64, 32);
+    }
+    if (width / height * frames == 22 / 17) { // 1.8 format
+        return handle(width / 22, 17);
+    }
+    throw new Error("Invalid cloak format");
+}
+
+
 export async function formatSkin(skin: string | Canvas | HTMLCanvasElement, platformUtils: BasePlatformUtils) {
     if (typeof skin == "string") {
         skin = await platformUtils.urlToCanvas(skin);

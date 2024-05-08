@@ -1,11 +1,22 @@
-import { BoxGeometry, DoubleSide, FrontSide, Group, LinearFilter, Material, MeshLambertMaterial, NearestFilter, SRGBColorSpace, Texture } from "three";
-import { ModelPart } from "./ModelPart.js";
+import { BoxGeometry, DoubleSide, FrontSide, Group, LinearFilter, Material, MeshLambertMaterial, NearestFilter, Object3D, SRGBColorSpace, Texture } from "three";
+import { ModelPart, ModelPartId } from "./ModelPart.js";
 import { buildModel, disposeOfGroup, formatSkin, getBoxUVs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
-import { PlayerModelOptions } from "../interface/PlayerModelOptions.js";
 import { MantleRenderer } from "../MantleRenderer.js";
 import { DisposableObject } from "../interface/DisposableObject.js";
 import { ModelInfo } from "../interface/ModelInfo.js";
 import { GenericModel } from "../interface/GenericModel.js";
+import { ElytraModel, ElytraModelOptions } from "./ElytraModel.js";
+import { CloakModel, CloakModelOptions } from "./CloakModel.js";
+
+export interface PlayerModelOptions {
+    skin?: string // path, url, username or uuid
+    slim?: boolean // steve or alex model
+    castShadow?: boolean // player model casts shadow
+    receiveShadow?: boolean // player model receives shadow
+    onSkinLoad?: () => void // callback for initial skin loading
+    elytra?: ElytraModelOptions // elytra options
+    cloak?: CloakModelOptions // cloak options
+}
 
 export class PlayerModel {
     private readonly group = new Group();
@@ -14,12 +25,18 @@ export class PlayerModel {
     private readonly skinMaterial: Material;
     private readonly transparentSkinMaterial: Material;
     private readonly models: ModelInfo[] = [];
-    private cape: ModelInfo | null = null;
+    private elytra: ElytraModel;
+    private cloak: CloakModel;
     private onSkinLoad: (() => void) | null = null;
+    private castShadow: boolean;
+    private receiveShadow: boolean;
 
     private disposableObjects: DisposableObject[] = [];
 
     public constructor(private readonly renderer: MantleRenderer, options: PlayerModelOptions) {
+        this.castShadow = options.castShadow ?? false;
+        this.receiveShadow = options.receiveShadow ?? false;
+
         this.skinMaterial = new MeshLambertMaterial({
             side: FrontSide
         });
@@ -32,11 +49,7 @@ export class PlayerModel {
         this.disposableObjects.push(this.transparentSkinMaterial);
 
         this.onSkinLoad = options.onSkinLoad || null;
-        this.setSkin(options.skin)
-        .then(() => {
-            if (this.onSkinLoad) this.onSkinLoad();
-        });
-
+        this.setSkin(options.skin || "https://textures.minecraft.net/texture/31f477eb1a7beee631c2ca64d06f8f68fa93a3386d04452ab27f43acdf1b60cb").then(this.onSkinLoad); // default steve skin
 
         // body & jacket
         const bodyGeometry = new BoxGeometry(8, 12, 4);
@@ -75,7 +88,7 @@ export class PlayerModel {
             hatGeometry,
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("head")!
+                part: this.getBodyPart("head")
             }
         ));
 
@@ -93,7 +106,7 @@ export class PlayerModel {
             new BoxGeometry(1, 1, 1),
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("armRight")!
+                part: this.getBodyPart("armRight")
             }
         ));
         
@@ -111,7 +124,7 @@ export class PlayerModel {
             new BoxGeometry(1, 1, 1),
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("armLeft")!
+                part: this.getBodyPart("armLeft")
             }
         ));
 
@@ -135,7 +148,7 @@ export class PlayerModel {
             trouserLeftGeometry,
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("legRight")!
+                part: this.getBodyPart("legRight")
             }
         ));
 
@@ -159,23 +172,74 @@ export class PlayerModel {
             trouserRightGeometry,
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("legLeft")!
+                part: this.getBodyPart("legLeft")
             }
         ));
+
+        this.elytra = new ElytraModel(renderer.platformUtils, options.elytra);
+        const elytra = this.elytra.getMesh();
+        elytra.position.set(0, 6, 3);
+        this.getBodyPart("body").mesh.add(elytra);
+
+        this.cloak = new CloakModel(renderer.platformUtils, options.cloak);
+        const cloak = this.cloak.getMesh();
+        cloak.position.set(0, 6, 2);
+        this.getBodyPart("body").mesh.add(cloak);
 
 
 
 
         this.setSlim(!!options.slim);
+
         this.group.add(body.pivot);
+        this.group.name = "Root";
+
+        this.group.traverse(child => {
+            child.castShadow = this.castShadow;
+            child.receiveShadow = this.receiveShadow;
+            if (child.type == "Group" || child.type == "Mesh") {
+                const add = child.add.bind(child);
+                child.add = (...objects: Object3D<Event>[]) => {
+                    const response = add(...objects);
+                    for (const object of objects) {
+                        console.log("Object added detected");
+                        object.traverse(grandchild => {
+                            grandchild.castShadow = this.castShadow;
+                            grandchild.receiveShadow = this.receiveShadow;
+                        });
+                    }
+                    return response;
+                }
+            }
+        });
+
+        this.castShadow = options.castShadow ?? false;
+        this.receiveShadow = options.receiveShadow ?? false;
+    }
+
+    public setShadowOptions(cast: boolean, receive: boolean) {
+        this.castShadow = cast;
+        this.receiveShadow = receive;
+
+        this.group.traverse(child => {
+            child.castShadow = cast;
+            child.receiveShadow = receive;
+        });
+    }
+
+    public getShadowOptions() {
+        return {
+            cast: this.castShadow,
+            receive: this.receiveShadow
+        }
     }
 
     public getMesh() {
         return this.group;
     }
 
-    public getBodyPart(name: string) {
-        return this.modelParts.get(name);
+    public getBodyPart(name: ModelPartId): ModelPart {
+        return this.modelParts.get(name) as ModelPart;
     }
 
     public setSlim(slim: boolean) {
@@ -267,54 +331,11 @@ export class PlayerModel {
         return [...this.models];
     }
 
-    public async setCape(url: string | null) {
-        if (this.cape) {
-            try {
-                this.removeModel(this.cape);
-            } catch {}
-        }
+    public getElytra() {
+        return this.elytra;
+    }
 
-        if (!url) {
-            this.cape = null;
-            return;
-        }
-
-        const texture = await this.renderer.platformUtils.createTexture(url);
-        texture.magFilter = NearestFilter;
-        texture.minFilter = LinearFilter;
-        texture.colorSpace = SRGBColorSpace;
-        this.disposableObjects.push(texture);
-
-        const material = new MeshLambertMaterial({
-            map: texture,
-            side: DoubleSide,
-            transparent: true,
-            alphaTest: 1e-5
-        });
-        this.disposableObjects.push(material);
-
-        const geometry = new BoxGeometry(10, 16, 1);
-        setUvs(geometry, getBoxUVs(0, 0, 10, 16, 1, 22, 17));
-        const model = new ModelPart(
-            geometry,
-            material,
-            {
-                part: this.getBodyPart("body")!,
-                yAttachment: 8,
-                zAttachment: -0.5,
-                yOffset: -2,
-                zOffset: 2.5
-            }
-        );
-
-        model.pivot.rotation.x = -0.5;
-        model.mesh.rotation.y = Math.PI;
-
-        this.cape = {
-            textures: [texture],
-            materials: [material],
-            mesh: model.pivot
-        }
-        this.models.push(this.cape);
+    public getCloak() {
+        return this.cloak;
     }
 }

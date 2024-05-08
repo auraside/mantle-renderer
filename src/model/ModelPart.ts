@@ -1,6 +1,8 @@
 import { BufferGeometry, Group, Material, Mesh } from "three";
 import { ModelPartParent } from "../interface/ModelPartParent.js";
 
+export type ModelPartId = "head" | "hat" | "body" | "jacket" | "armLeft" | "sleeveLeft" | "armRight" | "sleeveRight" | "legLeft" | "trouserLeft" | "legRight" | "trouserRight";
+
 export class ModelPart {
     public mesh: Mesh;
     public pivot = new Group();

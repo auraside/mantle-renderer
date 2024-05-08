@@ -1,11 +1,6 @@
+import { PlayerModelOptions } from "../Index.js"
 import { Canvas3d, BasePlatformUtils } from "../platformSpecifics/BasePlatformUtils.js"
 import { LightOptions } from "./LightOptions.js"
-
-export interface RendererPlayerOptions {
-    skin?: string // path, url, username or uuid
-    slim?: boolean // steve or alex model
-    onSkinLoad?: () => void // callback for initial skin loading
-}
 
 export interface RendererBloomOptions {
     threshold: number // how bright something has to be to start to bloom
@@ -24,7 +19,7 @@ export interface RendererOptions {
 
     ambientLight?: LightOptions // evenly illuminate entire scene
 
-    player?: RendererPlayerOptions // omit to have no player in scene
+    player?: PlayerModelOptions // omit to have no player in scene
 
     fxaa?: boolean // better but more expensive antialiasing
     ssaa?: boolean // most expensive antialiasing (due to supersampling). causes goofy colour banding for now

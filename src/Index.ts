@@ -9,11 +9,12 @@ export * from "./interface/GenericModel.js"
 export * from "./interface/LightOptions.js"
 export * from "./interface/ModelInfo.js"
 export * from "./interface/ModelPartParent.js"
-export * from "./interface/PlayerModelOptions.js"
 export * from "./interface/RendererOptions.js"
 
 export * from "./model/ModelPart.js"
 export * from "./model/PlayerModel.js"
+export * from "./model/ElytraModel.js"
+export * from "./model/CloakModel.js"
 
 export { ServerPlatformUtils } from "./platformSpecifics/ServerPlatformUtils.js";
 export { ClientPlatformUtils } from "./platformSpecifics/ClientPlatformUtils.js";

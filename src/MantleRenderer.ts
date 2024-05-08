@@ -1,4 +1,4 @@
-import { AmbientLight, FloatType, LinearFilter, NoToneMapping, PCFSoftShadowMap, PerspectiveCamera, PointLight, RGBAFormat, SRGBColorSpace, Scene, UnsignedByteType, Vector2, WebGLRenderTarget, WebGLRenderer } from "three";
+import { AmbientLight, FloatType, LinearFilter, NoToneMapping, Object3D, PCFSoftShadowMap, PerspectiveCamera, PointLight, RGBAFormat, SRGBColorSpace, Scene, UnsignedByteType, Vector2, WebGLRenderTarget, WebGLRenderer } from "three";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
@@ -22,11 +22,11 @@ export class MantleRenderer {
     private readonly renderer: WebGLRenderer;
     public readonly platformUtils: BasePlatformUtils;
     private readonly composer: EffectComposer | null = null;
-    public readonly scene = new Scene();
-    public readonly camera: PerspectiveCamera;
+    private readonly scene = new Scene();
+    private readonly camera: PerspectiveCamera;
     private readonly ambientLight: AmbientLight;
-    public readonly player: PlayerModel | undefined;
-    public readonly controls: OrbitControls | null;
+    private readonly player: PlayerModel | null;
+    private readonly controls: OrbitControls | null;
     private eventListeners: Map<EventType, (() => void)[]> = new Map();
     private lastRenderTime = 0;
     private renderTime = 0;
@@ -71,7 +71,10 @@ export class MantleRenderer {
             
 
             let renderTarget: WebGLRenderTarget | undefined;
-            const size = this.renderer.getDrawingBufferSize(new Vector2());
+
+            const size = new Vector2();
+            this.renderer.getDrawingBufferSize(size);
+
             renderTarget = new WebGLRenderTarget(size.width, size.height, {
                 minFilter: LinearFilter,
                 magFilter: LinearFilter,
@@ -92,7 +95,8 @@ export class MantleRenderer {
             if (options.ssaa) {
                 const ssaaPass = new SSAARenderPass(this.scene, this.camera, 0x000000, 0);
                 function ssaaResize() {
-                    ssaaPass.setSize(canvas.offsetWidth, canvas.offsetHeight);
+                    const size = mantleRenderer.renderer.getDrawingBufferSize(new Vector2());
+                    ssaaPass.setSize(size.x, size.y);
                 }
                 ssaaResize();
                 ssaaPass.unbiased = true;
@@ -120,8 +124,8 @@ export class MantleRenderer {
             if (options.fxaa) {
                 const fxaaPass = new ShaderPass(FXAAShader);
                 function fxaaResize() {
-                    fxaaPass.material.uniforms["resolution"].value.x = 1 / (canvas.offsetWidth * mantleRenderer.renderer.getPixelRatio());
-                    fxaaPass.material.uniforms["resolution"].value.y = 1 / (canvas.offsetHeight * mantleRenderer.renderer.getPixelRatio());
+                    const size = mantleRenderer.renderer.getDrawingBufferSize(new Vector2());
+                    fxaaPass.uniforms.resolution.value.set(1 / size.x, 1 / size.y);
                 }
                 fxaaResize();
                 this.composer.addPass(fxaaPass);
@@ -130,12 +134,12 @@ export class MantleRenderer {
             }
 
             if (options.bloom) {
-                const bloomPass = new UnrealBloomPass(new Vector2(canvas.offsetWidth * this.renderer.getPixelRatio(), canvas.offsetHeight * this.renderer.getPixelRatio()), options.bloom.strength, options.bloom.radius, options.bloom.threshold);
+                const bloomPass = new UnrealBloomPass(size, options.bloom.strength, options.bloom.radius, options.bloom.threshold);
                 this.disposableObjects.push(bloomPass);
                 this.composer.addPass(bloomPass);
                 function bloomResize() {
-                    bloomPass.resolution.setX(canvas.offsetWidth * mantleRenderer.renderer.getPixelRatio());
-                    bloomPass.resolution.setY(canvas.offsetHeight * mantleRenderer.renderer.getPixelRatio());
+                    const size = mantleRenderer.renderer.getDrawingBufferSize(new Vector2());
+                    bloomPass.resolution.set(size.x, size.y);
                 }
                 this.addEventListener("resize", bloomResize);
             }
@@ -160,16 +164,14 @@ export class MantleRenderer {
 
         // player model
         if (options.player) {
-            this.player = new PlayerModel(this, {
-                skin: options.player.skin || "https://textures.minecraft.net/texture/31f477eb1a7beee631c2ca64d06f8f68fa93a3386d04452ab27f43acdf1b60cb",
-                slim: !!options.player.slim,
-                onSkinLoad: options.player.onSkinLoad
-            });
+            this.player = new PlayerModel(this, options.player);
             this.scene.add(this.player.getMesh());
             this.player.getMesh().rotation.y = 0.5;
             this.disposableObjects.push(this.player);
 
             this.camera.lookAt(this.player.getMesh().position);
+        } else {
+            this.player = null;
         }
     }
 
@@ -254,6 +256,38 @@ export class MantleRenderer {
     public getCanvas() {
         return this.renderer.domElement;
     }
+
+    public getPlayer<T extends boolean = false>(orNull: T = false as T): T extends true ? PlayerModel | null : PlayerModel {
+        if (!this.player) {
+            if (orNull) {
+                return null as any;
+            } else {
+                throw new Error("Player model is not enabled in this renderer.");
+            }
+        }
+        return this.player;
+    }
+
+    public getControls<T extends boolean = false>(orNull: T = false as T): T extends true ? OrbitControls | null : OrbitControls {
+        if (!this.controls) {
+            if (orNull) {
+                return null as any;
+            } else {
+                throw new Error("Controls are not enabled in this renderer.");
+            }
+        }
+        return this.controls;
+    }
+
+    public getScene() {
+        return this.scene;
+    }
+
+    public getCamera() {
+        return this.camera;
+    }
+
+    
 
     // Anti-Aliasing is patchy client-side, uasge of this is only encouraged for server-side rendering. Client side applications can just .toDataURL() the canvas.
     public screenshot(width: number, height: number, mimeType: "png" | "jpeg", superSampling?: number) {
