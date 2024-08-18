@@ -7,6 +7,8 @@ import { ModelInfo } from "../interface/ModelInfo.js";
 import { GenericModel } from "../interface/GenericModel.js";
 import { ElytraModel, ElytraModelOptions } from "./ElytraModel.js";
 import { CloakModel, CloakModelOptions } from "./CloakModel.js";
+import { PlayerAccessory } from "./PlayerAccessory.js";
+import { BasePlatformUtils } from "../platformSpecifics/BasePlatformUtils.js";
 
 export interface PlayerModelOptions {
     skin?: string // path, url, username or uuid
@@ -24,7 +26,7 @@ export class PlayerModel {
     private skinTexture: Texture | undefined;
     private readonly skinMaterial: Material;
     private readonly transparentSkinMaterial: Material;
-    private readonly models: ModelInfo[] = [];
+    private readonly accessories = new Map<string, PlayerAccessory>();
     private elytra: ElytraModel;
     private cloak: CloakModel;
     private onSkinLoad: (() => void) | null = null;
@@ -129,50 +131,50 @@ export class PlayerModel {
         ));
 
 
-        // right leg & trouser
+        // left leg & trouser
         const legLeftGeometry = new BoxGeometry(4, 12, 4);
         setUvs(legLeftGeometry, getBoxUVs(16, 48, 4, 12, 4, 64, 64));
-        this.modelParts.set("legRight", new ModelPart(
+        this.modelParts.set("legLeft", new ModelPart(
             legLeftGeometry,
             this.skinMaterial,
             {
                 part: body,
                 yOffset: -12,
-                xOffset: 1.99, // just <2 to prevent z-fighting
+                xOffset: -1.99, // just <2 to prevent z-fighting
                 yAttachment: 6
             }
         ));
         const trouserLeftGeometry = new BoxGeometry(4.5, 12.5, 4.5);
         setUvs(trouserLeftGeometry, getBoxUVs(0, 48, 4, 12, 4, 64, 64));
-        this.modelParts.set("trouserRight", new ModelPart(
+        this.modelParts.set("trouserLeft", new ModelPart(
             trouserLeftGeometry,
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("legRight")
+                part: this.getBodyPart("legLeft")
             }
         ));
 
 
-        // left leg & trouser
+        // right leg & trouser
         const legRightGeometry = new BoxGeometry(4, 12, 4);
         setUvs(legRightGeometry, getBoxUVs(0, 16, 4, 12, 4, 64, 64));
-        this.modelParts.set("legLeft", new ModelPart(
+        this.modelParts.set("legRight", new ModelPart(
             legRightGeometry,
             this.skinMaterial,
             {
                 part: body,
                 yOffset: -12,
-                xOffset: -1.99, // just >-2 to prevent z-fighting
+                xOffset: 1.99, // just >-2 to prevent z-fighting
                 yAttachment: 6
             }
         ));
         const trouserRightGeometry = new BoxGeometry(4.5, 12.5, 4.5);
         setUvs(trouserRightGeometry, getBoxUVs(0, 32, 4, 12, 4, 64, 64));
-        this.modelParts.set("trouserLeft", new ModelPart(
+        this.modelParts.set("trouserRight", new ModelPart(
             trouserRightGeometry,
             this.transparentSkinMaterial,
             {
-                part: this.getBodyPart("legLeft")
+                part: this.getBodyPart("legRight")
             }
         ));
 
@@ -202,7 +204,6 @@ export class PlayerModel {
                 child.add = (...objects: Object3D<Event>[]) => {
                     const response = add(...objects);
                     for (const object of objects) {
-                        console.log("Object added detected");
                         object.traverse(grandchild => {
                             grandchild.castShadow = this.castShadow;
                             grandchild.receiveShadow = this.receiveShadow;
@@ -285,38 +286,50 @@ export class PlayerModel {
         updateMaterialTexture(this.transparentSkinMaterial, this.skinTexture, false);
     }
 
-    public async addModel(model: GenericModel, srgb?: boolean) {
-        if (!model.attachTo) throw "Model doesn't have an attachment specified";
-        const { modelInfo, mesh } = await buildModel(model, this.renderer.platformUtils, srgb);
-        mesh.scale.set(1.001, 1.001, 1.001);
-        model.attachTo.pivot.add(mesh);
-        this.disposableObjects.push(...modelInfo.materials, ...modelInfo.textures);
+    public async addAccessory(model: GenericModel, platformUtils: BasePlatformUtils, key: string, options: {
+        srgb?: boolean
+        scale?: number,
+        frames?: number,
+        frame?: number
+    } = {}) {
+        if (!model.attachTo) {
+            throw "Model doesn't have an attachment specified";
+        }
+        if (this.accessories.has(key)) {
+            throw "Model with the same key is already loaded";
+        }
 
-        this.models.push(modelInfo);
-        return modelInfo;
+        const accessory = new PlayerAccessory(model, platformUtils, {
+            frame: options.frame,
+            frames: options.frames
+        });
+        this.accessories.set(key, accessory);
+        await accessory.build(options.srgb);
+        if (options.scale) {
+            accessory.setScale(options.scale);
+        }
+        this.getBodyPart(model.attachTo || "armLeft").container.add(accessory.getMesh());
+
+        return accessory;
     }
 
-    public removeModel(model: ModelInfo) {
-        const index = this.models.indexOf(model);
-        if (index < 0) throw "Model is not loaded to this player";
-        this.models.splice(index, 1);
-
-        const disposables = [...model.materials, ...model.textures];
-        for (let object of disposables) {
-            const index = this.disposableObjects.indexOf(object);
-            if (index >= 0) this.disposableObjects.splice(index, 1);
-            object.dispose();
+    public removeAccessory(key: string) {
+        const accessory = this.accessories.get(key);
+        if (!accessory) {
+            throw "Accessory is not loaded";
         }
-        model.mesh.parent?.remove(model.mesh);
-        disposeOfGroup(model.mesh);
+        this.accessories.delete(key);
+
+        accessory.getMesh().parent?.remove(accessory.getMesh());
+        accessory.dispose();
     }
 
     public dispose() {
-        while (this.models.length) {
-            const model = this.models[0];
-            this.removeModel(model);
-            this.models.shift();
+        for (let [id, accessory] of this.accessories.entries()) {
+            this.removeAccessory(id);
+            accessory.dispose();
         }
+        this.accessories.clear();
 
         for (let object of this.disposableObjects) {
             object.dispose();
@@ -327,8 +340,12 @@ export class PlayerModel {
         }
     }
 
-    public getModels() {
-        return [...this.models];
+    public getAccessories() {
+        const record: Record<string, PlayerAccessory> = {};
+        for (let [key, accessory] of this.accessories.entries()) {
+            record[key] = accessory;
+        }
+        return record;
     }
 
     public getElytra() {

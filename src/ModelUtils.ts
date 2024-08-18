@@ -1,7 +1,7 @@
-import { BoxGeometry, BufferAttribute, BufferGeometry, DoubleSide, Group, Material, Mesh, MeshLambertMaterial, NearestFilter, SRGBColorSpace, Texture, Vector2 } from "three";
+import { BoxGeometry, BufferAttribute, BufferGeometry, DoubleSide, Group, Material, Mesh, MeshLambertMaterial, MeshNormalMaterial, NearestFilter, SRGBColorSpace, Texture, Vector2 } from "three";
 import { Coordinate, GenericModelElement, GenericModelFace, GenericModelFaceUv, GenericModelTexture, GenericModel } from "./interface/GenericModel.js"
 import { average, degreesToRadians } from "./Utils.js";
-import { ModelPart } from "./model/ModelPart.js";
+import { ModelPart, ModelPartId } from "./model/ModelPart.js";
 import { ModelInfo } from "./interface/ModelInfo.js";
 import { BasePlatformUtils } from "./platformSpecifics/BasePlatformUtils.js";
 import { Canvas } from "canvas";
@@ -68,13 +68,12 @@ export function updateMaterialTexture(material: Material, texture: Texture, disp
     material.needsUpdate = true;
 }
 
-export function parseJavaBlockModel(json: any, textureUrl: string, offset?: Coordinate, attachTo?: ModelPart) {
-    const texture: GenericModelTexture = {
-        name: Object.keys(json.textures)[0],
-        url: textureUrl,
-        width: 16,
-        height: 16
-    };
+export function parseJavaBlockModel(json: any, options: {
+    textureUrl?: string,
+    offset?: Coordinate,
+    attachTo?: ModelPartId
+} = {}) {
+    const { textureUrl, offset, attachTo } = options;
 
     const elements: GenericModelElement[] = [];
     for (let jsonElement of json.elements) {
@@ -133,7 +132,12 @@ export function parseJavaBlockModel(json: any, textureUrl: string, offset?: Coor
     const model: GenericModel = {
         attachTo,
         offset,
-        textures: [texture],
+        textures: [{
+            name: Object.keys(json.textures)[0],
+            url: textureUrl ?? null,
+            width: 16,
+            height: 16
+        }],
         elements
     }
 
@@ -142,12 +146,23 @@ export function parseJavaBlockModel(json: any, textureUrl: string, offset?: Coor
 
 
 // Disposes of geometry, meshes & groups. Materials & textures still need to be manually disposed of.
-export function disposeOfGroup(object: Mesh | Group) {
+export function disposeOfGroup(object: Mesh | Group, includeTextures = false) {
     object.traverse(child => {
         if (child instanceof Mesh) {
             const geometry: BufferGeometry = child.geometry;
             if (geometry) {
                 geometry.dispose();
+            }
+            if (includeTextures) {
+                const material: Material = child.material;
+                if (material) {
+                    // @ts-expect-error
+                    const texture: Texture | null = material.map;
+                    if (texture instanceof Texture) {
+                        texture.dispose();
+                    }
+                    material.dispose?.();
+                }
             }
         }
     });
@@ -158,20 +173,19 @@ export async function buildModel(model: GenericModel, platformUtils: BasePlatfor
     const group = new Group();
 
     const outModel: ModelInfo = {
-        textures: Array(model.textures.length),
-        materials: Array(model.textures.length),
+        textures: {},
         mesh: group
     }
 
-    const textures: {
-        [key: string]: {
-            name: string,
-            url: string,
-            width: number,
-            height: number,
-            material: Material
-        }
-    } = {};
+    // const textures: {
+    //     [key: string]: {
+    //         name: string,
+    //         url: string | null,
+    //         width: number,
+    //         height: number,
+    //         material: Material
+    //     }
+    // } = {};
 
     const faceOrder: GenericModelFace[] = ["top", "bottom", "left", "right", "back", "front"]; // todo: order this to properly support multiple textures
 
@@ -181,26 +195,27 @@ export async function buildModel(model: GenericModel, platformUtils: BasePlatfor
         const textureData = model.textures[i];
 
         const promise = new Promise<void>(async resolve => {
-            const texture = await platformUtils.createTexture(textureData.url);
-            texture.magFilter = NearestFilter;
-            texture.minFilter = NearestFilter;
-            if (srgb) {
-                texture.colorSpace = SRGBColorSpace;
+            let material: Material;
+            let canvas: HTMLCanvasElement | Canvas | null = null;
+            let texture: Texture | null = null;
+            if (textureData.url) {
+                canvas = await platformUtils.urlToCanvas(textureData.url);
+                texture = await platformUtils.createTexture(canvas);
+                material = createMaterial(texture, srgb);
+            } else {
+                material = new MeshNormalMaterial();
             }
-            outModel.textures[i] = texture;
+
+            outModel.textures[textureData.name] = {
+                material,
+                texture,
+                canvas
+            }
     
-            const material = new MeshLambertMaterial({
-                map: texture,
-                side: DoubleSide,
-                transparent: true,
-                alphaTest: 1e-5
-            });
-            outModel.materials[i] = material;
-    
-            textures[textureData.name] = {
-                ...textureData,
-                material
-            };
+            // textures[textureData.name] = {
+            //     ...textureData,
+            //     material
+            // };
 
             resolve();
         });
@@ -209,24 +224,29 @@ export async function buildModel(model: GenericModel, platformUtils: BasePlatfor
 
     await Promise.allSettled(promises);
 
-    for (let element of model.elements) {
+    for (let index = 0; index < model.elements.length; index++) {
+        const element = model.elements[index];
+
         const geometry = new BoxGeometry(...element.size);
         const uvs: Map<GenericModelFace, Vector2[]> = new Map();
 
         for (let i = 0; i < 6; i++) {
             const uv = element.uv[faceOrder[i]];
-            const materialIndex = Object.keys(textures).indexOf(uv.texture);
-            const textureInfo = textures[uv.texture];
-            geometry.groups[i].materialIndex = materialIndex;
-            const vertices = getFaceVertices(uv.uv[0], uv.uv[1], uv.uv[2], uv.uv[3], textureInfo.width, textureInfo.height);
-            uvs.set(faceOrder[i], vertices);
+            const textureInfo = model.textures.find(t => t.name == uv.texture);
+            if (textureInfo) {
+                const vertices = getFaceVertices(uv.uv[0], uv.uv[1], uv.uv[2], uv.uv[3], textureInfo.width, textureInfo.height);
+                uvs.set(faceOrder[i], vertices);
+            }
         }
         
-        setUvs(geometry, orderUvs(uvs.get("top")!, uvs.get("bottom")!, uvs.get("left")!, uvs.get("right")!, uvs.get("front")!, uvs.get("back")!));
+        const orderedUvs = orderUvs(uvs.get("top")!, uvs.get("bottom")!, uvs.get("left")!, uvs.get("right")!, uvs.get("front")!, uvs.get("back")!);
+        setUvs(geometry, orderedUvs);
+
+        const firstMaterial = Object.values(outModel.textures)[0].material;
 
         const part = new ModelPart(
             geometry,
-            Object.values(textures).map(info => info.material)
+            firstMaterial
         );
         part.pivot.position.set(...element.origin);
         part.mesh.position.set(
@@ -235,7 +255,6 @@ export async function buildModel(model: GenericModel, platformUtils: BasePlatfor
             element.position[2] - element.origin[2]
         );
         part.pivot.rotation.set(...element.rotation);
-
         group.add(part.pivot);
     }
 
@@ -250,6 +269,20 @@ export async function buildModel(model: GenericModel, platformUtils: BasePlatfor
         modelInfo: outModel,
         mesh: container
     }
+}
+
+export function createMaterial(texture: Texture, srgb?: boolean) {
+    texture.magFilter = NearestFilter;
+    texture.minFilter = NearestFilter;
+    if (srgb) {
+        texture.colorSpace = SRGBColorSpace;
+    }
+    return new MeshLambertMaterial({
+        map: texture,
+        side: DoubleSide,
+        transparent: true,
+        alphaTest: 1e-5
+    });
 }
 
 

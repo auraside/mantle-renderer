@@ -15,6 +15,7 @@ export * from "./model/ModelPart.js"
 export * from "./model/PlayerModel.js"
 export * from "./model/ElytraModel.js"
 export * from "./model/CloakModel.js"
+export * from "./model/PlayerAccessory.js"
 
 export { ServerPlatformUtils } from "./platformSpecifics/ServerPlatformUtils.js";
 export { ClientPlatformUtils } from "./platformSpecifics/ClientPlatformUtils.js";

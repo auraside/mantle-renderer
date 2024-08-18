@@ -43,7 +43,9 @@ export class ClientPlatformUtils extends BasePlatformUtils {
                 const canvas = document.createElement("canvas");
                 canvas.width = image.width;
                 canvas.height = image.height;
-                canvas.getContext("2d")!.drawImage(image, 0, 0, image.width, image.height);
+                canvas.getContext("2d", {
+                    willReadFrequently: true
+                })!.drawImage(image, 0, 0, image.width, image.height);
                 
                 resolve(canvas);
             }

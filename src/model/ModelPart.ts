@@ -4,8 +4,9 @@ import { ModelPartParent } from "../interface/ModelPartParent.js";
 export type ModelPartId = "head" | "hat" | "body" | "jacket" | "armLeft" | "sleeveLeft" | "armRight" | "sleeveRight" | "legLeft" | "trouserLeft" | "legRight" | "trouserRight";
 
 export class ModelPart {
-    public mesh: Mesh;
-    public pivot = new Group();
+    public readonly mesh: Mesh;
+    public readonly container = new Group();
+    public readonly pivot = new Group();
 
     public constructor(
         public readonly geometry: BufferGeometry,
@@ -13,7 +14,8 @@ export class ModelPart {
         private readonly parent?: ModelPartParent
     ) {
         this.mesh = new Mesh(this.geometry, this.materials);
-        this.pivot.add(this.mesh);
+        this.container.add(this.mesh);
+        this.pivot.add(this.container);
 
         if (this.parent) {
             const xA = this.parent.xAttachment ?? 0;
@@ -25,7 +27,7 @@ export class ModelPart {
                 (this.parent.yOffset ?? 0) + yA,
                 (this.parent.zOffset ?? 0) + zA
             );
-            this.mesh.position.set(
+            this.container.position.set(
                 -xA,
                 -yA,
                 -zA

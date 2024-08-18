@@ -1,8 +1,8 @@
-import { ModelPart } from "../model/ModelPart.js";
+import { ModelPartId } from "../model/ModelPart.js";
 
 export interface GenericModelTexture {
     name: string
-    url: string
+    url: string | null
     width: number
     height: number
 }
@@ -35,7 +35,7 @@ export interface GenericModelElement {
 }
 
 export interface GenericModel {
-    attachTo?: ModelPart
+    attachTo?: ModelPartId
     offset?: Coordinate
 
     textures: GenericModelTexture[]
