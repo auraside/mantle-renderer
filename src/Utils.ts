@@ -13,3 +13,13 @@ export function degreesToRadians(degrees: number) {
 export function radiansToDegrees(radians: number) {
     return radians / Math.PI * 180;
 }
+
+export function rotateArray<T>(array: T[], shift: number) {
+	let original = [...array];
+
+	for (let i = 0; i < array.length; ++i) {
+		array[i] = original[(i + shift) % array.length];
+	}
+
+	return array;
+}

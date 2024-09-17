@@ -1,38 +1,41 @@
-import { BoxGeometry, BufferAttribute, BufferGeometry, DoubleSide, Group, Material, Mesh, MeshLambertMaterial, MeshNormalMaterial, NearestFilter, SRGBColorSpace, Texture, Vector2 } from "three";
-import { Coordinate, GenericModelElement, GenericModelFace, GenericModelFaceUv, GenericModelTexture, GenericModel } from "./interface/GenericModel.js"
-import { average, degreesToRadians } from "./Utils.js";
-import { ModelPart, ModelPartId } from "./model/ModelPart.js";
-import { ModelInfo } from "./interface/ModelInfo.js";
+import { BufferAttribute, BufferGeometry, DoubleSide, Group, Material, Mesh, MeshLambertMaterial, NearestFilter, SRGBColorSpace, Texture, Vector2 } from "three";
+import { Coordinate, GenericModelElement, GenericModelFaceUv, GenericModel } from "./interface/GenericModel.js"
+import { average, degreesToRadians, rotateArray } from "./Utils.js";
+import { ModelPartId } from "./model/ModelPart.js";
 import { BasePlatformUtils } from "./platformSpecifics/BasePlatformUtils.js";
 import { Canvas } from "canvas";
 
-export function getFaceVertices(x1: number, y1: number, x2: number, y2: number, textureWidth: number, textureHeight: number) {
-    return [
+export function getFaceVertices(x1: number, y1: number, x2: number, y2: number, textureWidth: number, textureHeight: number, rotation: number) { // rotation is in 90deg
+    while (rotation < 0) {
+        rotation += 90;
+    }
+    const vertices = [
         new Vector2(x1 / textureWidth, 1.0 - y2 / textureHeight),
 		new Vector2(x2 / textureWidth, 1.0 - y2 / textureHeight),
 		new Vector2(x2 / textureWidth, 1.0 - y1 / textureHeight),
 		new Vector2(x1 / textureWidth, 1.0 - y1 / textureHeight)
     ];
+    return rotateArray(vertices, Math.floor(rotation / 90));
 }
 
 export function orderUvs(top: Vector2[], bottom: Vector2[], left: Vector2[], right: Vector2[], front: Vector2[], back: Vector2[]) {
     return [
 		left[3], left[2], left[0], left[1],
         right[3], right[2], right[0], right[1],
-		top[1], top[0], top[2], top[3],
-		bottom[2], bottom[3], bottom[1], bottom[0],
+		top[3], top[2], top[0], top[1],
+		bottom[3], bottom[2], bottom[0], bottom[1],
 		back[3], back[2], back[0], back[1],
         front[3], front[2], front[0], front[1]
     ];
 }
 
 export function getBoxUVs(u: number, v: number, width: number, height: number, depth: number, textureWidth: number, textureHeight: number) {
-    const top = getFaceVertices(u + depth, v, u + width + depth, v + depth, textureWidth, textureHeight);
-	const bottom = getFaceVertices(u + width + depth, v, u + width * 2 + depth, v + depth, textureWidth, textureHeight);
-	const left = getFaceVertices(u, v + depth, u + depth, v + depth + height, textureWidth, textureHeight);
-	const front = getFaceVertices(u + depth, v + depth, u + width + depth, v + depth + height, textureWidth, textureHeight);
-	const right = getFaceVertices(u + width + depth, v + depth, u + width + depth * 2, v + height + depth, textureWidth, textureHeight);
-	const back = getFaceVertices(u + width + depth * 2, v + depth, u + width * 2 + depth * 2, v + height + depth, textureWidth, textureHeight);
+    const top = getFaceVertices(u + depth, v, u + width + depth, v + depth, textureWidth, textureHeight, 0);
+	const bottom = getFaceVertices(u + width + depth, v, u + width * 2 + depth, v + depth, textureWidth, textureHeight, 0);
+	const left = getFaceVertices(u, v + depth, u + depth, v + depth + height, textureWidth, textureHeight, 0);
+	const front = getFaceVertices(u + depth, v + depth, u + width + depth, v + depth + height, textureWidth, textureHeight, 0);
+	const right = getFaceVertices(u + width + depth, v + depth, u + width + depth * 2, v + height + depth, textureWidth, textureHeight, 0);
+	const back = getFaceVertices(u + width + depth * 2, v + depth, u + width * 2 + depth * 2, v + height + depth, textureWidth, textureHeight, 0);
 
     return orderUvs(top, bottom, left, right, front, back);
 }
@@ -107,6 +110,7 @@ export function parseJavaBlockModel(json: any, options: {
 
             return {
                 texture,
+                rotation: face.rotation ?? 0,
                 uv: face.uv
             }
         }
@@ -169,107 +173,109 @@ export function disposeOfGroup(object: Mesh | Group, includeTextures = false) {
 }
 
 
-export async function buildModel(model: GenericModel, platformUtils: BasePlatformUtils, srgb?: boolean) {
-    const group = new Group();
+// export async function buildModel(model: GenericModel, platformUtils: BasePlatformUtils, srgb?: boolean) {
+//     console.log("BUILDING MODEL");
+//     const group = new Group();
 
-    const outModel: ModelInfo = {
-        textures: {},
-        mesh: group
-    }
+//     const outModel: ModelInfo = {
+//         textures: {},
+//         mesh: group
+//     }
 
-    // const textures: {
-    //     [key: string]: {
-    //         name: string,
-    //         url: string | null,
-    //         width: number,
-    //         height: number,
-    //         material: Material
-    //     }
-    // } = {};
+//     // const textures: {
+//     //     [key: string]: {
+//     //         name: string,
+//     //         url: string | null,
+//     //         width: number,
+//     //         height: number,
+//     //         material: Material
+//     //     }
+//     // } = {};
 
-    const faceOrder: GenericModelFace[] = ["top", "bottom", "left", "right", "back", "front"]; // todo: order this to properly support multiple textures
+//     const faceOrder: GenericModelFace[] = ["top", "bottom", "left", "right", "back", "front"]; // todo: order this to properly support multiple textures
 
-    const promises: Promise<void>[] = [];
+//     const promises: Promise<void>[] = [];
 
-    for (let i = 0; i < model.textures.length; i++) {
-        const textureData = model.textures[i];
+//     for (let i = 0; i < model.textures.length; i++) {
+//         const textureData = model.textures[i];
 
-        const promise = new Promise<void>(async resolve => {
-            let material: Material;
-            let canvas: HTMLCanvasElement | Canvas | null = null;
-            let texture: Texture | null = null;
-            if (textureData.url) {
-                canvas = await platformUtils.urlToCanvas(textureData.url);
-                texture = await platformUtils.createTexture(canvas);
-                material = createMaterial(texture, srgb);
-            } else {
-                material = new MeshNormalMaterial();
-            }
+//         const promise = new Promise<void>(async resolve => {
+//             let material: Material;
+//             let canvas: HTMLCanvasElement | Canvas | null = null;
+//             let texture: Texture | null = null;
+//             if (textureData.url) {
+//                 canvas = await platformUtils.urlToCanvas(textureData.url);
+//                 texture = await platformUtils.createTexture(canvas);
+//                 material = createMaterial(texture, srgb);
+//             } else {
+//                 material = new MeshNormalMaterial();
+//             }
 
-            outModel.textures[textureData.name] = {
-                material,
-                texture,
-                canvas
-            }
+//             outModel.textures[textureData.name] = {
+//                 material,
+//                 texture,
+//                 canvas
+//             }
     
-            // textures[textureData.name] = {
-            //     ...textureData,
-            //     material
-            // };
+//             // textures[textureData.name] = {
+//             //     ...textureData,
+//             //     material
+//             // };
 
-            resolve();
-        });
-        promises.push(promise);
-    }
+//             resolve();
+//         });
+//         promises.push(promise);
+//     }
 
-    await Promise.allSettled(promises);
+//     await Promise.allSettled(promises);
 
-    for (let index = 0; index < model.elements.length; index++) {
-        const element = model.elements[index];
+//     for (let index = 0; index < model.elements.length; index++) {
+//         const element = model.elements[index];
 
-        const geometry = new BoxGeometry(...element.size);
-        const uvs: Map<GenericModelFace, Vector2[]> = new Map();
+//         const geometry = new BoxGeometry(...element.size);
+//         const uvs: Map<GenericModelFace, Vector2[]> = new Map();
 
-        for (let i = 0; i < 6; i++) {
-            const uv = element.uv[faceOrder[i]];
-            const textureInfo = model.textures.find(t => t.name == uv.texture);
-            if (textureInfo) {
-                const vertices = getFaceVertices(uv.uv[0], uv.uv[1], uv.uv[2], uv.uv[3], textureInfo.width, textureInfo.height);
-                uvs.set(faceOrder[i], vertices);
-            }
-        }
+//         for (let i = 0; i < 6; i++) {
+//             const uv = element.uv[faceOrder[i]];
+//             const textureInfo = model.textures.find(t => t.name == uv.texture);
+//             if (textureInfo) {
+//                 const vertices = getFaceVertices(uv.uv[0], uv.uv[1], uv.uv[2], uv.uv[3], textureInfo.width, textureInfo.height);
+//                 console.log(vertices);
+//                 uvs.set(faceOrder[i], vertices);
+//             }
+//         }
         
-        const orderedUvs = orderUvs(uvs.get("top")!, uvs.get("bottom")!, uvs.get("left")!, uvs.get("right")!, uvs.get("front")!, uvs.get("back")!);
-        setUvs(geometry, orderedUvs);
+//         const orderedUvs = orderUvs(uvs.get("top")!, uvs.get("bottom")!, uvs.get("left")!, uvs.get("right")!, uvs.get("front")!, uvs.get("back")!);
+//         setUvs(geometry, orderedUvs);
 
-        const firstMaterial = Object.values(outModel.textures)[0].material;
+//         const firstMaterial = Object.values(outModel.textures)[0].material;
 
-        const part = new ModelPart(
-            geometry,
-            firstMaterial
-        );
-        part.pivot.position.set(...element.origin);
-        part.mesh.position.set(
-            element.position[0] - element.origin[0],
-            element.position[1] - element.origin[1],
-            element.position[2] - element.origin[2]
-        );
-        part.pivot.rotation.set(...element.rotation);
-        group.add(part.pivot);
-    }
+//         const part = new ModelPart(
+//             geometry,
+//             firstMaterial
+//         );
+//         part.pivot.position.set(...element.origin);
+//         part.mesh.position.set(
+//             element.position[0] - element.origin[0],
+//             element.position[1] - element.origin[1],
+//             element.position[2] - element.origin[2]
+//         );
+//         part.pivot.rotation.set(...element.rotation);
+//         group.add(part.pivot);
+//     }
 
-    if (model.offset) {
-        group.position.set(...model.offset);
-    }
+//     if (model.offset) {
+//         group.position.set(...model.offset);
+//     }
 
-    const container = new Group();
-    container.add(group);
+//     const container = new Group();
+//     container.add(group);
 
-    return {
-        modelInfo: outModel,
-        mesh: container
-    }
-}
+//     return {
+//         modelInfo: outModel,
+//         mesh: container
+//     }
+// }
 
 export function createMaterial(texture: Texture, srgb?: boolean) {
     texture.magFilter = NearestFilter;

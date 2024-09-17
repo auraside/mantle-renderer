@@ -11,6 +11,7 @@ export type Coordinate = [number, number, number];
 
 export interface GenericModelFaceUv {
     texture: string
+    rotation: number
     uv: [number, number, number, number]
 }
 

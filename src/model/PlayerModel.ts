@@ -1,9 +1,8 @@
 import { BoxGeometry, DoubleSide, FrontSide, Group, LinearFilter, Material, MeshLambertMaterial, NearestFilter, Object3D, SRGBColorSpace, Texture } from "three";
 import { ModelPart, ModelPartId } from "./ModelPart.js";
-import { buildModel, disposeOfGroup, formatSkin, getBoxUVs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
+import { disposeOfGroup, formatSkin, getBoxUVs, setUvs, updateMaterialTexture } from "../ModelUtils.js";
 import { MantleRenderer } from "../MantleRenderer.js";
 import { DisposableObject } from "../interface/DisposableObject.js";
-import { ModelInfo } from "../interface/ModelInfo.js";
 import { GenericModel } from "../interface/GenericModel.js";
 import { ElytraModel, ElytraModelOptions } from "./ElytraModel.js";
 import { CloakModel, CloakModelOptions } from "./CloakModel.js";

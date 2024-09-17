@@ -68,7 +68,7 @@ export class Model {
                 const uv = element.uv[faceOrder[i]];
                 const textureInfo = this.model.textures.find(t => t.name == uv.texture);
                 if (textureInfo) {
-                    const vertices = getFaceVertices(uv.uv[0], uv.uv[1], uv.uv[2], uv.uv[3], textureInfo.width, textureInfo.height);
+                    const vertices = getFaceVertices(uv.uv[0], uv.uv[1], uv.uv[2], uv.uv[3], textureInfo.width, textureInfo.height, uv.rotation);
                     uvs.set(faceOrder[i], vertices);
                 }
             }
