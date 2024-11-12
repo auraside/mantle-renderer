@@ -30,8 +30,8 @@ export function orderUvs(top: Vector2[], bottom: Vector2[], left: Vector2[], rig
 }
 
 export function getBoxUVs(u: number, v: number, width: number, height: number, depth: number, textureWidth: number, textureHeight: number) {
-    const top = getFaceVertices(u + depth, v, u + width + depth, v + depth, textureWidth, textureHeight, 0);
-	const bottom = getFaceVertices(u + width + depth, v, u + width * 2 + depth, v + depth, textureWidth, textureHeight, 0);
+    const top = getFaceVertices(u + width + depth, v, u + depth, v + depth, textureWidth, textureHeight, 0);
+    const bottom = getFaceVertices(u + width * 2 + depth, v, u + width + depth, v + depth, textureWidth, textureHeight, 0);
 	const left = getFaceVertices(u, v + depth, u + depth, v + depth + height, textureWidth, textureHeight, 0);
 	const front = getFaceVertices(u + depth, v + depth, u + width + depth, v + depth + height, textureWidth, textureHeight, 0);
 	const right = getFaceVertices(u + width + depth, v + depth, u + width + depth * 2, v + height + depth, textureWidth, textureHeight, 0);
